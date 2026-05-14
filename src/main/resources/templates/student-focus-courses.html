@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Focus Courses</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Môn cần chú ý</h2>
+      <p class="text-muted mb-0">Xem các môn cần học lại hoặc cải thiện và gửi yêu cầu mở lớp cho admin.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/student/requests" class="btn btn-outline-secondary">Yêu cầu khác</a>
+      <a href="/student" class="btn btn-secondary">← Dashboard</a>
+    </div>
+  </div>
+
+  <div id="alertBox" class="alert d-none" role="alert"></div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Mã môn</th>
+              <th>Tên môn</th>
+              <th>Tín chỉ</th>
+              <th>Điểm cao nhất</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="focusCoursesBody">
+            <tr><td colspan="6" class="text-center text-muted py-4">Đang tải dữ liệu...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Gửi yêu cầu mở lớp</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Môn học</label>
+          <input type="text" id="modalCourseName" class="form-control" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Loại yêu cầu</label>
+          <input type="text" class="form-control" value="OPEN_CLASS" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Lý do</label>
+          <textarea id="modalReason" class="form-control" rows="4" placeholder="Nhập lý do gửi yêu cầu..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="submitRequestBtn">Gửi yêu cầu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_FOCUS = '/api/registration/focus-courses';
+  const API_REQUESTS = '/api/registration/requests';
+  const API_PROFILE = '/api/student-profiles';
+  const userId = localStorage.getItem('fake_user_id');
+  const role = localStorage.getItem('fake_user_role');
+
+  if (!userId || role !== 'student') {
+    window.location.href = '/';
+  }
+
+  let focusCourses = [];
+  let requestedCourseIds = new Set();
+  let selectedCourse = null;
+  const modal = new bootstrap.Modal(document.getElementById('requestModal'));
+
+  function showAlert(message, type = 'success') {
+    const box = document.getElementById('alertBox');
+    box.className = `alert alert-${type}`;
+    box.textContent = message;
+    box.classList.remove('d-none');
+    setTimeout(() => box.classList.add('d-none'), 3500);
+  }
+
+  async function loadRequestedCourses() {
+    const res = await fetch(`${API_REQUESTS}/me?student_id=${userId}`);
+    const data = await res.json();
+    requestedCourseIds = new Set();
+
+    if (data.success && Array.isArray(data.data)) {
+      data.data
+        .filter(r => (r.requestType || '').toUpperCase() === 'OPEN_CLASS' && r.desiredCourseId)
+        .forEach(r => requestedCourseIds.add(String(r.desiredCourseId).toUpperCase()));
+    }
+  }
+
+  async function loadFocusCourses() {
+    const res = await fetch(`${API_FOCUS}?student_id=${userId}`);
+    const data = await res.json();
+    focusCourses = data.success && Array.isArray(data.data) ? data.data : [];
+  }
+
+  function statusBadge(status) {
+    if (status === 'FAILED') return '<span class="badge text-bg-danger">FAILED</span>';
+    if (status === 'IMPROVEMENT') return '<span class="badge text-bg-warning text-dark">IMPROVEMENT</span>';
+    return `<span class="badge text-bg-secondary">${status || '-'}</span>`;
+  }
+
+  function render() {
+    const body = document.getElementById('focusCoursesBody');
+    if (!focusCourses.length) {
+      body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Không có môn cần chú ý nào.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = focusCourses.map(course => {
+      const courseId = String(course.courseId || '').toUpperCase();
+      const requested = requestedCourseIds.has(courseId);
+      return `
+        <tr>
+          <td><code>${course.courseCode || courseId.slice(0, 8)}</code></td>
+          <td>${course.courseName || '-'}</td>
+          <td>${course.credits ?? '-'}</td>
+          <td>${course.bestGrade ?? '-'}</td>
+          <td>${statusBadge(course.status)}</td>
+          <td>
+            <button class="btn btn-sm ${requested ? 'btn-success' : 'btn-primary'}" ${requested ? 'disabled' : ''}
+                    onclick="openRequestModal('${courseId}')">
+              ${requested ? 'Đã gửi yêu cầu' : 'Gửi yêu cầu mở lớp'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openRequestModal(courseId) {
+    selectedCourse = focusCourses.find(c => String(c.courseId).toUpperCase() === courseId.toUpperCase()) || null;
+    if (!selectedCourse) return;
+    document.getElementById('modalCourseName').value = selectedCourse.courseName || '';
+    document.getElementById('modalReason').value = '';
+    modal.show();
+  }
+
+  async function submitRequest() {
+    if (!selectedCourse) return;
+
+    const reason = document.getElementById('modalReason').value.trim();
+    if (!reason) {
+      showAlert('Vui lòng nhập lý do gửi yêu cầu', 'warning');
+      return;
+    }
+
+    const payload = {
+      studentId: userId,
+      requestType: 'OPEN_CLASS',
+      desiredCourseId: selectedCourse.courseId,
+      desiredCourseName: selectedCourse.courseName,
+      reason
+    };
+
+    const btn = document.getElementById('submitRequestBtn');
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(API_REQUESTS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        requestedCourseIds.add(String(selectedCourse.courseId).toUpperCase());
+        modal.hide();
+        render();
+        showAlert('Đã gửi yêu cầu mở lớp thành công');
+      } else {
+        showAlert(data.message || 'Gửi yêu cầu thất bại', 'danger');
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert('Gửi yêu cầu thất bại', 'danger');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('submitRequestBtn').addEventListener('click', submitRequest);
+
+  async function init() {
+    try {
+      await loadRequestedCourses();
+      await loadFocusCourses();
+      render();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('focusCoursesBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Lỗi tải dữ liệu.</td></tr>';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
+
+
