@@ -1,385 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Student Course Requests</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .header h2 { color: #333; }
-        .header-actions { display: flex; gap: 10px; }
-        .btn-back { padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
-        .btn-back:hover { background: #5a6268; }
-        .message { margin: 15px 20px; padding: 12px; border-radius: 4px; display: none; }
-        .message.success { background: #d4edda; color: #155724; display: block; }
-        .message.error { background: #f8d7da; color: #721c24; display: block; }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Yêu cầu mở lớp</title>
 
-        .filters { padding: 0 20px 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-        .filter-group { display: flex; align-items: center; gap: 8px; }
-        .filter-group label { font-weight: 600; color: #666; }
-        .filter-group input, .filter-group select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-filter { padding: 6px 14px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-filter:hover { background: #0056b3; }
-
-        .requests-section { padding: 20px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff; }
-        .stat-card h4 { margin: 0 0 8px; color: #666; font-size: 0.9rem; }
-        .stat-card .number { font-size: 1.8rem; font-weight: bold; color: #333; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #f9f9f9; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; color: #666; font-size: 0.9rem; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
-        tr:hover { background: #fafafa; }
-
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; color: white; }
-        .badge-pending { background: #ffc107; color: #333; }
-        .badge-approved { background: #28a745; }
-        .badge-rejected { background: #dc3545; }
-
-        .btn-group { display: flex; gap: 6px; }
-        .btn-sm { padding: 6px 10px; font-size: 0.85rem; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-approve { background: #28a745; color: white; }
-        .btn-approve:hover { background: #218838; }
-        .btn-reject { background: #dc3545; color: white; }
-        .btn-reject:hover { background: #c82333; }
-        .btn-view { background: #007bff; color: white; }
-        .btn-view:hover { background: #0056b3; }
-
-        .empty-state { padding: 40px; text-align: center; color: #999; }
-        .footer { padding: 15px 20px; border-top: 1px solid #eee; text-align: right; }
-
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 20px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #ddd; }
-        .modal-header h3 { margin: 0; }
-        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
-
-        .info-row { margin-bottom: 12px; }
-        .info-row label { font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
-        .info-row p { color: #333; margin: 0; }
-
-        .action-area { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; }
-        .action-area textarea { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: sans-serif; min-height: 80px; }
-    </style>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
+  <!-- AdminLTE css -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>📋 Student Course Requests</h2>
-            <div class="header-actions">
-                <a href="/admin" class="btn-back">← Back to Admin Dashboard</a>
-            </div>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+  <!-- Navbar -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <!-- Left navbar links -->
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="/admin" class="nav-link">Trang chủ</a>
+      </li>
+    </ul>
+
+    <!-- Right navbar links -->
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <a class="nav-link text-danger" href="#" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="/admin" class="brand-link">
+      <span class="brand-text font-weight-light ml-3">Hệ thống Đào tạo</span>
+    </a>
+
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <i class="fas fa-user-circle fa-2x text-white"></i>
         </div>
-
-        <div id="statusMessage" class="message"></div>
-
-        <div class="filters">
-            <div class="filter-group">
-                <label>Filter by Status:</label>
-                <select id="filterStatus">
-                    <option value="">All Statuses</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Filter by Type:</label>
-                <select id="filterType">
-                    <option value="">All Types</option>
-                    <option value="OPEN_CLASS">Open Class</option>
-                    <option value="OPEN_PERIOD">Open Period</option>
-                    <option value="INSTRUCTOR_CHANGE">Instructor Change</option>
-                    <option value="SCHEDULE_CHANGE">Schedule Change</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Search by Student:</label>
-                <input type="text" id="searchStudent" placeholder="Name or Code">
-            </div>
-            <button class="btn-filter" onclick="applyFilters()">Apply</button>
+        <div class="info">
+          <a href="#" class="d-block">Quản trị viên</a>
         </div>
+      </div>
 
-        <div class="requests-section">
-            <div class="stats" id="statsContainer"></div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <li class="nav-item">
+            <a href="/admin" class="nav-link">
+              <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>Tổng quan</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/admin/requests" class="nav-link active">
+              <i class="nav-icon fas fa-envelope-open-text"></i>
+              <p>Yêu cầu mở lớp</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Student</th>
-                        <th>Type</th>
-                        <th>Course / Target</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="requestsTableBody">
-                    <tr><td colspan="6" class="empty-state">Loading requests...</td></tr>
-                </tbody>
+  <!-- Content Wrapper -->
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1 class="m-0">Quản lý Yêu cầu mở lớp</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+
+        <div id="alertBox" class="alert d-none"></div>
+
+        <div class="card card-primary card-outline">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> Danh sách nhóm yêu cầu (Cần >= 5 để duyệt)</h3>
+          </div>
+          <div class="card-body">
+            <table id="requestsTable" class="table table-bordered table-striped table-hover">
+              <thead>
+              <tr>
+                <th>Mã Môn</th>
+                <th>Tên Môn</th>
+                <th>Số lượng yêu cầu</th>
+                <th>Hành động</th>
+              </tr>
+              </thead>
+              <tbody id="reqBody">
+                <tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>
+              </tbody>
             </table>
+          </div>
         </div>
-    </div>
 
-    <!-- View Details Modal -->
-    <div class="modal" id="detailsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Request Details</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="modalBody"></div>
-        </div>
-    </div>
+      </div>
+    </section>
+  </div>
 
-    <script>
-        const API_REQUESTS = '/api/admin/registration/requests';
-        const userId = localStorage.getItem('fake_user_id');
-        const role = localStorage.getItem('fake_user_role');
+  <footer class="main-footer">
+    <strong>Copyright &copy; 2024.</strong> Đã đăng ký bản quyền.
+  </footer>
+</div>
 
-        let allRequests = [];
-        let filteredRequests = [];
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables & Plugins -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
-        if (!userId || role !== 'admin') {
-            window.location.href = '/';
-        }
+<script>
+    const role = localStorage.getItem('fake_user_role');
+    if (role !== 'admin') window.location.href = '/';
 
-        function showMessage(msg, isError = false) {
-            const msgDiv = document.getElementById('statusMessage');
-            msgDiv.innerText = msg;
-            msgDiv.className = 'message ' + (isError ? 'error' : 'success');
-            setTimeout(() => { msgDiv.style.display = 'none'; }, 5000);
-        }
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/';
+    }
 
-        function badge(status) {
-            const className = status === 'APPROVED' ? 'badge-approved' : status === 'REJECTED' ? 'badge-rejected' : 'badge-pending';
-            return `<span class="badge ${className}">${status}</span>`;
-        }
+    function showAlert(msg, type='success') {
+        const b = document.getElementById('alertBox');
+        b.className = `alert alert-${type}`;
+        b.textContent = msg;
+        b.classList.remove('d-none');
+        setTimeout(() => b.classList.add('d-none'), 3000);
+    }
 
-        async function loadRequests() {
-            try {
-                const res = await fetch(API_REQUESTS);
-                const data = await res.json();
+    let groups = [];
+    async function loadStats() {
+        const res = await fetch('/api/registration/requests/admin/pending');
+        const data = await res.json();
 
-                if (!data.success || !data.data) {
-                    document.getElementById('requestsTableBody').innerHTML = '<tr><td colspan="6" class="empty-state">No requests found.</td></tr>';
-                    document.getElementById('statsContainer').innerHTML = '';
-                    return;
-                }
-
-                allRequests = data.data;
-                renderRequests(allRequests);
-                updateStats(allRequests);
-            } catch (e) {
-                console.error(e);
-                showMessage('Error loading requests', true);
+        let map = {};
+        (data.data || []).forEach(req => {
+            if(!map[req.courseId]) {
+                map[req.courseId] = { courseCode: req.courseCode, courseName: req.courseName, count: 0 };
             }
-        }
+            map[req.courseId].count++;
+        });
 
-        function updateStats(requests) {
-            const stats = {
-                total: requests.length,
-                pending: requests.filter(r => r.status === 'PENDING').length,
-                approved: requests.filter(r => r.status === 'APPROVED').length,
-                rejected: requests.filter(r => r.status === 'REJECTED').length
-            };
+        groups = Object.keys(map).map(k => ({ courseId: k, ...map[k] }));
 
-            document.getElementById('statsContainer').innerHTML = `
-                <div class="stat-card">
-                    <h4>Total Requests</h4>
-                    <div class="number">${stats.total}</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #ffc107;">
-                    <h4>Pending</h4>
-                    <div class="number" style="color: #ffc107;">${stats.pending}</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #28a745;">
-                    <h4>Approved</h4>
-                    <div class="number" style="color: #28a745;">${stats.approved}</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #dc3545;">
-                    <h4>Rejected</h4>
-                    <div class="number" style="color: #dc3545;">${stats.rejected}</div>
-                </div>
-            `;
-        }
-
-        function renderRequests(requests) {
-            if (requests.length === 0) {
-                document.getElementById('requestsTableBody').innerHTML = '<tr><td colspan="6" class="empty-state">No requests match your filters.</td></tr>';
-                return;
+        const body = document.getElementById('reqBody');
+        if(!groups.length) {
+            body.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Không có yêu cầu nào đang chờ.</td></tr>';
+            if ($.fn.DataTable.isDataTable('#requestsTable')) {
+                $('#requestsTable').DataTable().destroy();
             }
+            return;
+        }
 
-            const html = requests.map(r => `
+        if ($.fn.DataTable.isDataTable('#requestsTable')) {
+            $('#requestsTable').DataTable().destroy();
+        }
+
+        body.innerHTML = groups.map(g => {
+            let btnClass = g.count >= 5 ? 'btn-success' : 'btn-secondary disabled';
+            let title = g.count >= 5 ? 'Mở lớp ngay' : 'Chưa đủ số lượng';
+            return `
                 <tr>
-                    <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td><strong>${g.courseCode}</strong></td>
+                    <td>${g.courseName}</td>
                     <td>
-                        ${r.studentName}<br>
-                        <small style="color: #999;">${r.studentCode}</small>
+                        <span class="badge ${g.count >= 5 ? 'badge-success' : 'badge-warning'} px-2 py-1" style="font-size: 14px;">
+                            <i class="fas fa-users"></i> ${g.count} sinh viên
+                        </span>
                     </td>
-                    <td>${r.requestType}</td>
                     <td>
-                        ${r.desiredCourseName || r.targetFaculty || '-'}<br>
-                        <small style="color: #999;">
-                            ${r.targetCohort ? 'Cohort: ' + r.targetCohort : ''}
-                            ${r.targetSemester ? ' | ' + r.targetSemester : ''}
-                        </small>
-                    </td>
-                    <td>${badge(r.status)}</td>
-                    <td>
-                        <div class="btn-group">
-                            <button class="btn-sm btn-view" onclick="viewDetails('${r.id}')">View</button>
-                            ${r.status === 'PENDING' ? `
-                                <button class="btn-sm btn-approve" onclick="approveRequest('${r.id}')">Approve</button>
-                                <button class="btn-sm btn-reject" onclick="rejectRequest('${r.id}')">Reject</button>
-                            ` : ''}
-                        </div>
+                        <button class="btn btn-sm ${btnClass}" ${g.count < 5 ? 'disabled' : ''} onclick="approveCourse('${g.courseId}')">
+                            <i class="fas fa-check-circle"></i> ${title}
+                        </button>
                     </td>
                 </tr>
-            `).join('');
-
-            document.getElementById('requestsTableBody').innerHTML = html;
-        }
-
-        function applyFilters() {
-            const status = document.getElementById('filterStatus').value;
-            const type = document.getElementById('filterType').value;
-            const search = document.getElementById('searchStudent').value.toLowerCase();
-
-            filteredRequests = allRequests.filter(r => {
-                const matchStatus = !status || r.status === status;
-                const matchType = !type || r.requestType === type;
-                const matchSearch = !search ||
-                    r.studentName.toLowerCase().includes(search) ||
-                    r.studentCode.toLowerCase().includes(search);
-                return matchStatus && matchType && matchSearch;
-            });
-
-            renderRequests(filteredRequests);
-            updateStats(filteredRequests);
-        }
-
-        function viewDetails(requestId) {
-            const request = allRequests.find(r => r.id === requestId);
-            if (!request) return;
-
-            const modalBody = document.getElementById('modalBody');
-            modalBody.innerHTML = `
-                <div class="info-row">
-                    <label>Student Information</label>
-                    <p><strong>${request.studentName}</strong> (${request.studentCode})</p>
-                    <p style="font-size: 0.9rem; color: #666;">${request.email || 'No email'}</p>
-                </div>
-                <div class="info-row">
-                    <label>Faculty / Cohort / Major</label>
-                    <p>${request.faculty || '-'} | ${request.cohort || '-'} | ${request.major || '-'}</p>
-                </div>
-                <div class="info-row">
-                    <label>Request Type</label>
-                    <p>${request.requestType}</p>
-                </div>
-                <div class="info-row">
-                    <label>Desired Course</label>
-                    <p>${request.desiredCourseName || 'N/A'}</p>
-                </div>
-                ${request.targetFaculty ? `
-                <div class="info-row">
-                    <label>Target Faculty</label>
-                    <p>${request.targetFaculty}</p>
-                </div>
-                ` : ''}
-                ${request.targetCohort ? `
-                <div class="info-row">
-                    <label>Target Cohort</label>
-                    <p>${request.targetCohort}</p>
-                </div>
-                ` : ''}
-                ${request.targetSemester ? `
-                <div class="info-row">
-                    <label>Target Semester</label>
-                    <p>${request.targetSemester}</p>
-                </div>
-                ` : ''}
-                <div class="info-row">
-                    <label>Reason</label>
-                    <p>${request.reason}</p>
-                </div>
-                <div class="info-row">
-                    <label>Status</label>
-                    <p>${badge(request.status)}</p>
-                </div>
-                ${request.adminNote ? `
-                <div class="info-row">
-                    <label>Admin Note</label>
-                    <p>${request.adminNote}</p>
-                </div>
-                ` : ''}
-                <div class="info-row">
-                    <label>Submit Date</label>
-                    <p>${new Date(request.createdAt).toLocaleString()}</p>
-                </div>
             `;
+        }).join('');
 
-            document.getElementById('detailsModal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('detailsModal').classList.remove('active');
-        }
-
-        async function approveRequest(requestId) {
-            if (!confirm('Approve this request?')) return;
-
-            try {
-                const res = await fetch(`${API_REQUESTS}/${requestId}/approve`, { method: 'PATCH' });
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    showMessage('Request approved successfully');
-                    closeModal();
-                    loadRequests();
-                } else {
-                    showMessage(data.message || 'Failed to approve', true);
-                }
-            } catch (e) {
-                console.error(e);
-                showMessage('Approval failed', true);
+        $('#requestsTable').DataTable({
+            "responsive": true,
+            "lengthChange": false,
+            "autoWidth": false,
+            "language": {
+                "search": "Tìm kiếm:",
+                "info": "Đang hiển thị _START_ đến _END_ trong tổng số _TOTAL_ kết quả",
+                "paginate": { "first": "Đầu", "last": "Cuối", "next": "Trang sau", "previous": "Trang trước" }
             }
+        });
+    }
+
+    async function approveCourse(cId) {
+        if(!confirm('Bạn có chắc muốn MỞ LỚP cho môn này?')) return;
+        const res = await fetch(`/api/registration/requests/admin/approve-by-course?courseId=${cId}`, { method:'PATCH' });
+        const data = await res.json();
+        if(res.ok && data.success) {
+            showAlert('Đã duyệt mở lớp thành công!', 'success');
+            loadStats();
+        } else {
+            showAlert(data.message || 'Duyệt thất bại!', 'danger');
         }
+    }
 
-        async function rejectRequest(requestId) {
-            const note = prompt('Rejection reason (optional):');
-            if (note === null) return;
-
-            try {
-                const url = `${API_REQUESTS}/${requestId}/reject?note=${encodeURIComponent(note)}`;
-                const res = await fetch(url, { method: 'PATCH' });
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    showMessage('Request rejected');
-                    closeModal();
-                    loadRequests();
-                } else {
-                    showMessage(data.message || 'Failed to reject', true);
-                }
-            } catch (e) {
-                console.error(e);
-                showMessage('Rejection failed', true);
-            }
-        }
-
-        // Init
-        loadRequests();
-    </script>
+    loadStats();
+</script>
 </body>
 </html>
-
-
-

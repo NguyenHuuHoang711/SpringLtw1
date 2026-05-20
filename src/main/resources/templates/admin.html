@@ -1,471 +1,570 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 8px; max-width: 1000px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { padding: 10px 15px; background: #e9ecef; border: 1px solid #ddd; cursor: pointer; border-radius: 4px; }
-        .tab.active { background: #007bff; color: white; border-color: #007bff; }
-        .section { display: none; }
-        .section.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f9f9f9; }
-        button { padding: 5px 10px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
-        button.danger { background-color: #dc3545; }
-        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; display: none; }
-        .message.success { background-color: #d4edda; color: #155724; display: block; }
-        .message.error { background-color: #f8d7da; color: #721c24; display: block; }
-        .form-group { margin-bottom: 10px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold;}
-        .form-group input, .form-group textarea { width: 100%; padding: 8px; box-sizing: border-box; }
-        .form-group textarea { resize: vertical; min-height: 100px; }
-        .create-form { background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ddd; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard - Đào tạo</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <style>
+    .section-content { display: none; }
+    .section-content.active { display: block; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>Admin Dashboard</h2>
-            <div>
-                <span id="userDisplay"></span>
-                <button onclick="logout()" style="margin-left: 10px; background-color: #6c757d;">Logout</button>
-            </div>
-        </div>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
 
-        <div id="statusMessage" class="message"></div>
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a></li></ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item"><a class="nav-link text-danger cursor-pointer" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+    </ul>
+  </nav>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('periodsSection')">Registration Periods</div>
-            <div class="tab" onclick="switchTab('equivalentsSection')">Equivalent Courses</div>
-            <div class="tab" onclick="switchTab('registrationsSection')">All Registrations</div>
-            <div class="tab" onclick="switchTab('requestsSection')">Student Requests</div>
-            <div class="tab" onclick="window.location.href='/admin/requests'" style="margin-left: 10px; cursor: pointer; border: 1px solid #ffc107; background: #fff3cd;">📚 View All Course Requests</div>
-        </div>
-
-        <!-- 1. PERIODS SECTION -->
-        <div id="periodsSection" class="section active">
-            <div class="create-form">
-                <h3>Quick Create Registration Period</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Name</label><input type="text" id="p_name" value="Test Period"></div>
-                    <div class="form-group"><label>Semester ID (UUID)</label><input type="text" id="p_semId" value="99999999-9999-9999-9999-999999999999"></div>
-                    <div class="form-group"><label>Start Time (YYYY-MM-DDTHH:mm:ss)</label><input type="text" id="p_start" value="2024-01-01T00:00:00"></div>
-                    <div class="form-group"><label>End Time</label><input type="text" id="p_end" value="2025-12-31T23:59:59"></div>
-                    <div class="form-group"><label>Max Credits</label><input type="number" id="p_max" value="25"></div>
-                    <div class="form-group"><label>Min Credits</label><input type="number" id="p_min" value="10"></div>
-                </div>
-                <button onclick="createPeriod()">Create Period</button>
-            </div>
-
-            <table id="periodsTable">
-                <thead><tr><th>Name</th><th>Start</th><th>End</th><th>Active</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 2. MANAGE OFFERINGS SECTION -->
-        <div id="offeringsSection" class="section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 id="offeringsTitle">Manage Offerings</h3>
-                <button onclick="switchTab('periodsSection')" style="background: #6c757d;">Back to Periods</button>
-            </div>
-
-            <div class="create-form">
-                <h3>Bulk Add Course Offerings</h3>
-                <p style="font-size: 12px; color: #555; margin-top: 0;">Enter one or multiple Course IDs separated by space or new line.</p>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="form-group">
-                        <label>Course IDs (UUIDs)</label>
-                        <textarea id="o_course_ids" placeholder="Ex:\n11111111-1111-1111-1111-111111111111\n22222222-2222-2222-2222-222222222222"></textarea>
-                    </div>
-                    <div class="form-group" style="width: 200px;">
-                        <label>Max Slots (per course)</label>
-                        <input type="number" id="o_max_slots" value="50">
-                    </div>
-                    <input type="hidden" id="o_period_id">
-                </div>
-                <button onclick="addOfferingsBulk()" style="margin-top: 10px;">Add Offerings</button>
-            </div>
-
-            <table id="offeringsTable">
-                <thead><tr><th>Course Name</th><th>Course ID</th><th>Credits</th><th>Slots</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 3. EQUIVALENT COURSES SECTION -->
-        <div id="equivalentsSection" class="section">
-            <div class="create-form">
-                <h3>Quick Create Equivalent</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Original Course ID</label><input type="text" id="e_orig" placeholder="UUID"></div>
-                    <div class="form-group"><label>Equivalent Course ID</label><input type="text" id="e_equiv" placeholder="UUID"></div>
-                    <div class="form-group"><label>Type (1: Replace)</label><input type="number" id="e_type" value="1"></div>
-                    <div class="form-group"><label>Effect Date (YYYY-MM-DD)</label><input type="text" id="e_date" value="2024-01-01"></div>
-                </div>
-                <button onclick="createEquivalent()">Create</button>
-            </div>
-
-            <table id="equivsTable">
-                <thead><tr><th>ID</th><th>Original</th><th>Equivalent</th><th>Type</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 4. REGISTRATIONS SECTION -->
-        <div id="registrationsSection" class="section">
-            <div class="create-form">
-                <h3>Force Register (Admin)</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Student ID</label><input type="text" id="r_student" placeholder="UUID"></div>
-                    <div class="form-group"><label>Course ID</label><input type="text" id="r_course" placeholder="UUID"></div>
-                    <div class="form-group"><label>Period ID</label><input type="text" id="r_period" placeholder="UUID"></div>
-                    <div class="form-group"><label>Type (1: New)</label><input type="number" id="r_type" value="1"></div>
-                </div>
-                <button onclick="forceRegister()">Force Register</button>
-            </div>
-
-            <table id="regsTable">
-                <thead><tr><th>ID</th><th>Student</th><th>Course</th><th>Status</th><th>Paid</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <!-- 5. STUDENT REQUESTS SECTION -->
-        <div id="requestsSection" class="section">
-            <div class="create-form">
-                <h3>Student Requests</h3>
-                <p style="margin-top:0;color:#555;">Review requests to open classes or registration periods.</p>
-            </div>
-
-            <table id="requestsTable">
-                <thead><tr><th>Time</th><th>Student</th><th>Type</th><th>Target</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="#" class="brand-link"><span class="brand-text font-weight-light ml-3">Hệ thống Đào tạo</span></a>
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image"><i class="fas fa-user-shield fa-2x text-white"></i></div>
+        <div class="info"><a href="#" class="d-block">Quản trị viên</a></div>
+      </div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <li class="nav-item"><a href="#" class="nav-link tab-link active" data-target="dashboardSection"><i class="nav-icon fas fa-tachometer-alt"></i><p>Tổng quan</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="periodsSection"><i class="nav-icon fas fa-calendar-alt"></i><p>Đợt đăng ký & Môn mở</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="equivalentsSection"><i class="nav-icon fas fa-exchange-alt"></i><p>Môn học tương đương</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="registrationsSection"><i class="nav-icon fas fa-users"></i><p>Quản lý Đăng ký (SV)</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="requestsSection"><i class="nav-icon fas fa-envelope-open-text"></i><p>Yêu cầu hỗ trợ (SV)</p></a></li>
+        </ul>
+      </nav>
     </div>
+  </aside>
 
-    <script>
-        const API_ADMIN = '/api/admin/registration';
-        const role = localStorage.getItem('fake_user_role');
-        const userId = localStorage.getItem('fake_user_id');
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2"><div class="col-sm-6"><h1 class="m-0" id="pageTitle">Tổng quan hệ thống</h1></div></div>
+        <div id="alertBox" class="alert d-none mt-2"></div>
+      </div>
+    </section>
 
-        if (!role || role !== 'admin') {
-            window.location.href = '/';
+    <section class="content">
+      <div class="container-fluid">
+
+        <!-- DASHBOARD -->
+        <div id="dashboardSection" class="section-content active">
+          <div class="row">
+            <div class="col-lg-3 col-6"><div class="small-box bg-info"><div class="inner"><h3 id="statPeriods">0</h3><p>Đợt đăng ký</p></div><div class="icon"><i class="fas fa-calendar"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-success"><div class="inner"><h3 id="statRegs">0</h3><p>Lượt đăng ký môn</p></div><div class="icon"><i class="fas fa-users"></i></div></div></div>
+            <div class="col-lg-3 col-6"><div class="small-box bg-warning"><div class="inner"><h3 id="statReqs">0</h3><p>Yêu cầu chờ duyệt</p></div><div class="icon"><i class="fas fa-envelope"></i></div></div></div>
+          </div>
+        </div>
+
+        <!-- PERIODS SECTION -->
+        <div id="periodsSection" class="section-content">
+          <div class="card card-primary card-outline">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="card-title"><i class="fas fa-list"></i> Danh sách Đợt đăng ký</h3>
+              <button class="btn btn-sm btn-primary float-right" onclick="openPeriodModal()"><i class="fas fa-plus"></i> Tạo đợt mới</button>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped" id="periodsTable">
+                <thead><tr><th>Tên đợt</th><th>Thời gian</th><th>Max TC</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody id="periodsBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card card-success card-outline d-none" id="offeringsCard">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="card-title"><i class="fas fa-book-open"></i> Môn mở trong đợt: <strong id="currentPeriodName"></strong></h3>
+              <button class="btn btn-sm btn-success float-right" onclick="openOfferingModal()"><i class="fas fa-plus"></i> Thêm môn</button>
+            </div>
+            <div class="card-body p-0">
+              <input type="hidden" id="currentPeriodId">
+              <table class="table table-striped">
+                <thead><tr><th>Mã Môn</th><th>Tên Môn</th><th>Max Slots</th><th>Hành động</th></tr></thead>
+                <tbody id="offeringsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- EQUIVALENT COURSES -->
+        <div id="equivalentsSection" class="section-content">
+          <div class="card card-warning card-outline">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="card-title"><i class="fas fa-exchange-alt"></i> Quản lý Môn tương đương</h3>
+              <button class="btn btn-sm btn-primary float-right" onclick="openEquivModal()"><i class="fas fa-plus"></i> Thêm cặp môn</button>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Môn gốc</th><th>Môn tương đương</th><th>Loại</th><th>Ghi chú</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody id="equivBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- REGISTRATIONS -->
+        <div id="registrationsSection" class="section-content">
+          <div class="card card-info card-outline">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h3 class="card-title"><i class="fas fa-users"></i> Quản lý Đăng ký</h3>
+              <button class="btn btn-sm btn-danger float-right" onclick="openForceRegModal()"><i class="fas fa-user-shield"></i> Ép đăng ký (Force)</button>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped" id="allRegsTable">
+                <thead><tr><th>Mã SV</th><th>Tên SV</th><th>Mã Lớp</th><th>Tên Môn</th><th>Loại</th><th>Thanh toán</th><th>Trạng thái</th><th>Ngày ĐK</th></tr></thead>
+                <tbody id="allRegsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- REQUESTS -->
+        <div id="requestsSection" class="section-content">
+          <div class="card card-danger card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Danh sách Yêu cầu từ Sinh viên</h3></div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Mã SV</th><th>Tên SV</th><th>Mã Môn</th><th>Tên Môn</th><th>Loại Yêu cầu</th><th>Lý do</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody id="reqBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Modal Tạo/Sửa Đợt -->
+<div class="modal fade" id="periodModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="periodModalTitle">Thêm đợt đăng ký</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="p_id">
+        <div class="form-group"><label>Tên đợt</label><input type="text" id="p_name" class="form-control" required></div>
+        <div class="form-group"><label>Bắt đầu</label><input type="datetime-local" id="p_start" class="form-control" required></div>
+        <div class="form-group"><label>Kết thúc</label><input type="datetime-local" id="p_end" class="form-control" required></div>
+        <div class="form-group"><label>Tín chỉ tối đa</label><input type="number" id="p_max" class="form-control" value="25" required></div>
+        <div class="form-group"><label>Cấu hình đối tượng (JSON)</label><textarea id="p_target" class="form-control" rows="3"></textarea></div>
+        <div class="form-group"><label>Danh sách môn mở (UUID, cách nhau bởi khoảng trắng)</label><textarea id="p_courseIds" class="form-control" rows="3" placeholder="uuid-1 uuid-2 uuid-3"></textarea></div>
+        <div class="form-group"><label>Max Slots mỗi môn</label><input type="number" id="p_slots" class="form-control" value="50" min="1"></div>
+        <div class="form-group">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="p_active" checked>
+            <label class="custom-control-label" for="p_active">Đang mở (Active)</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="savePeriod()">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm Môn mở -->
+<div class="modal fade" id="offeringModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Thêm Môn học vào đợt</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>Mã Môn học (UUIDs)</label><textarea id="o_courseIds" class="form-control" rows="3" required></textarea></div>
+        <div class="form-group"><label>Max Slots</label><input type="number" id="o_maxSlots" class="form-control" value="50" required></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-success" onclick="saveOfferings()">Thêm môn</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Môn tương đương -->
+<div class="modal fade" id="equivModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cấu hình môn tương đương</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>Môn gốc (UUID)</label><input type="text" id="e_orig" class="form-control" required></div>
+        <div class="form-group"><label>Môn thay thế (UUID)</label><input type="text" id="e_equiv" class="form-control" required></div>
+        <div class="form-group"><label>Ngày hiệu lực</label><input type="date" id="e_effectDate" class="form-control" required></div>
+        <div class="form-group">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="e_active" checked>
+            <label class="custom-control-label" for="e_active">Đang hoạt động</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Ghi chú</label><input type="text" id="e_note" class="form-control"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveEquiv()">Lưu</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ép đăng ký -->
+<div class="modal fade" id="forceRegModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle"></i> Ép Đăng Ký (Bỏ qua Rules)</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label>Mã SV (UUID)</label><input type="text" id="f_studentId" class="form-control" required></div>
+        <div class="form-group"><label>Mã Lớp (UUID)</label><input type="text" id="f_courseId" class="form-control" required></div>
+        <div class="form-group"><label>Mã Đợt (UUID)</label><input type="text" id="f_periodId" class="form-control" required></div>
+        <div class="form-group"><label>Loại (1:Mới, 2:Lại, 3:Cải thiện)</label><input type="number" id="f_type" class="form-control" value="1"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-danger" onclick="forceRegister()">Ép Đăng Ký</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<script>
+  const API_ADMIN = '/api/admin/registration';
+  const API_REQ = '/api/admin/registration/requests'; // Route mới lấy tất cả Requests
+  const API_COURSE = '/api/courses'; // API để lấy thông tin Course
+  const API_STUDENT_PROFILE = '/api/student-profiles'; // API để lấy thông tin Student Profile
+  const DEFAULT_PERIOD_TARGET = '{"allowFreeRegistration":true}';
+
+  if (localStorage.getItem('fake_user_role') !== 'admin') window.location.href = '/';
+
+  let coursesMap = {}; // Cache course details
+  let studentProfilesMap = {}; // Cache student profiles
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+  function shortId(id) { return id ? id.substring(0, 8) + '...' : ''; }
+
+  function showAlert(msg, type='success') {
+    const b = document.getElementById('alertBox');
+    b.className = `alert alert-${type} mt-2`;
+    b.textContent = msg;
+    b.classList.remove('d-none');
+    setTimeout(() => b.classList.add('d-none'), 4000);
+    window.scrollTo(0,0);
+  }
+
+  $('.tab-link').click(function(e) {
+    e.preventDefault();
+    $('.tab-link').removeClass('active'); $(this).addClass('active');
+    const target = $(this).data('target');
+    $('.section-content').removeClass('active'); $('#' + target).addClass('active');
+    document.getElementById('pageTitle').innerText = $(this).text().trim();
+
+    if(target === 'periodsSection') loadPeriods();
+    if(target === 'equivalentsSection') loadEquivs();
+    if(target === 'registrationsSection') loadAllRegs();
+    if(target === 'requestsSection') loadStats();
+    if(target === 'dashboardSection') loadDashboardStats();
+  });
+
+  async function fetchCourses(courseIds) {
+    if(!courseIds || courseIds.length === 0) return;
+    const idsToFetch = courseIds.filter(id => id && !coursesMap[id.toUpperCase()]);
+    if(idsToFetch.length > 0) {
+      const coursesRes = await fetch(`${API_COURSE}?ids=${idsToFetch.join(',')}`);
+      const coursesData = await coursesRes.json();
+      if(coursesData.success && coursesData.data) {
+        coursesData.data.forEach(c => { coursesMap[c.id.toUpperCase()] = c; });
+      }
+    }
+  }
+
+  async function fetchStudentProfiles(studentIds) {
+    if(!studentIds || studentIds.length === 0) return;
+    const idsToFetch = studentIds.filter(id => id && !studentProfilesMap[id.toUpperCase()]);
+    if(idsToFetch.length > 0) {
+      const studentsRes = await fetch(`${API_STUDENT_PROFILE}/batch?ids=${idsToFetch.join(',')}`);
+      const studentsData = await studentsRes.json();
+      if(studentsData.success && studentsData.data) {
+        studentsData.data.forEach(s => { studentProfilesMap[s.studentId.toUpperCase()] = s; });
+      }
+    }
+  }
+
+  async function loadDashboardStats() {
+    fetch(`${API_ADMIN}/periods`).then(r=>r.json()).then(d=> { if(d.success) document.getElementById('statPeriods').innerText = d.data.length; });
+    fetch(`${API_ADMIN}/course-registrations`).then(r=>r.json()).then(d=> { if(d.success) document.getElementById('statRegs').innerText = d.data.length; });
+    fetch(API_REQ).then(r=>r.json()).then(d=> { if(d.success) document.getElementById('statReqs').innerText = d.data.filter(x => x.status === 'PENDING').length; });
+  }
+
+  async function loadPeriods() {
+    const res = await fetch(`${API_ADMIN}/periods`);
+    const data = await res.json();
+    const body = document.getElementById('periodsBody');
+    body.innerHTML = '';
+    if(data.success && data.data) {
+      data.data.forEach(p => {
+        body.innerHTML += `
+                    <tr>
+                        <td><strong>${p.name}</strong><br><small class="text-muted" title="${p.id}">${shortId(p.id)}</small></td>
+                        <td>${new Date(p.startTime).toLocaleDateString()} - ${new Date(p.endTime).toLocaleDateString()}</td>
+                        <td>${p.maxCredits}</td>
+                        <td><small>${p.targetConfig || 'Tất cả'}</small></td>
+                        <td>${p.isActive ? '<span class="badge badge-success">Mở</span>' : '<span class="badge badge-secondary">Đóng</span>'}</td>
+                        <td>
+                            <button class="btn btn-xs btn-info" onclick="editPeriod('${p.id}')"><i class="fas fa-edit"></i> Sửa</button>
+                            <button class="btn btn-xs btn-success" onclick="viewPeriodOfferings('${p.id}', '${p.name}')"><i class="fas fa-book"></i> Môn mở</button>
+                            <button class="btn btn-xs btn-danger" onclick="deletePeriod('${p.id}')"><i class="fas fa-trash"></i> Xóa</button>
+                        </td>
+                    </tr>`;
+      });
+    }
+  }
+
+  function openPeriodModal() {
+    document.getElementById('p_id').value = '';
+    document.getElementById('p_name').value = '';
+    document.getElementById('p_start').value = '';
+    document.getElementById('p_end').value = '';
+    document.getElementById('p_courseIds').value = '';
+    document.getElementById('p_slots').value = 50;
+    document.getElementById('p_target').value = DEFAULT_PERIOD_TARGET;
+    document.getElementById('p_active').checked = true;
+    document.getElementById('periodModalTitle').innerText = 'Thêm đợt đăng ký';
+    $('#periodModal').modal('show');
+  }
+
+  async function editPeriod(id) {
+    const res = await fetch(`${API_ADMIN}/periods/${id}`);
+    const data = await res.json();
+    if(data.success) {
+      const p = data.data;
+      document.getElementById('p_id').value = p.id;
+      document.getElementById('p_name').value = p.name;
+      document.getElementById('p_start').value = p.startTime.substring(0, 16);
+      document.getElementById('p_end').value = p.endTime.substring(0, 16);
+      document.getElementById('p_max').value = p.maxCredits;
+      document.getElementById('p_target').value = p.targetConfig || '';
+      document.getElementById('p_courseIds').value = '';
+      document.getElementById('p_slots').value = 50;
+      document.getElementById('p_active').checked = p.isActive;
+      $('#periodModal').modal('show');
+    }
+  }
+
+  async function savePeriod() {
+    const id = document.getElementById('p_id').value;
+    const courseIds = document.getElementById('p_courseIds').value.trim();
+    const targetConfig = document.getElementById('p_target').value.trim() || DEFAULT_PERIOD_TARGET;
+    const payload = {
+      name: document.getElementById('p_name').value,
+      startTime: document.getElementById('p_start').value + ':00',
+      endTime: document.getElementById('p_end').value + ':00',
+      maxCredits: document.getElementById('p_max').value,
+      targetConfig: targetConfig,
+      isActive: document.getElementById('p_active').checked
+    };
+    const res = await fetch(id ? `${API_ADMIN}/periods/${id}` : `${API_ADMIN}/periods`, {
+      method: id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(res.ok && data.success) {
+      const periodId = data.data?.id || id;
+      if(courseIds && periodId) {
+        const offeringPayload = {
+          registrationPeriodId: periodId,
+          courseIds: courseIds,
+          maxSlots: document.getElementById('p_slots').value || 50
+        };
+        const offeringRes = await fetch(`${API_ADMIN}/offerings/bulk`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(offeringPayload) });
+        const offeringData = await offeringRes.json();
+        if(!offeringRes.ok || !offeringData.success) {
+          showAlert((offeringData && offeringData.message) || 'Lưu đợt thành công nhưng thêm môn mở thất bại', 'warning');
+        } else {
+          showAlert('Lưu thành công');
         }
+      } else {
+        showAlert('Lưu thành công');
+      }
+      $('#periodModal').modal('hide');
+      loadPeriods();
+    } else {
+      showAlert((data && data.message) || 'Lưu thất bại', 'danger');
+    }
+  }
 
-        document.getElementById('userDisplay').innerText = 'Admin: ' + userId.substring(0,8) + '...';
+  async function deletePeriod(id) {
+    if(confirm('Xóa đợt đăng ký này?')) { await fetch(`${API_ADMIN}/periods/${id}`, { method: 'DELETE' }); loadPeriods(); }
+  }
 
-        function showMessage(msg, isError = false) {
-            const msgDiv = document.getElementById('statusMessage');
-            msgDiv.innerText = msg;
-            msgDiv.className = 'message ' + (isError ? 'error' : 'success');
-            setTimeout(() => { msgDiv.style.display = 'none'; }, 5000);
-        }
+  async function viewPeriodOfferings(id, name) {
+    document.getElementById('offeringsCard').classList.remove('d-none');
+    document.getElementById('currentPeriodName').innerText = name;
+    document.getElementById('currentPeriodId').value = id;
+    loadPeriodOfferings(id);
+  }
 
-        function switchTab(sectionId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  async function loadPeriodOfferings(periodId) {
+    const res = await fetch(`${API_ADMIN}/offerings?period_id=${periodId}`);
+    const data = await res.json();
+    const body = document.getElementById('offeringsBody');
+    body.innerHTML = '';
+    if(data.success && data.data) {
+      const courseIds = data.data.map(o => o.courseId);
+      await fetchCourses(courseIds); // Fetch course details
+      data.data.forEach(o => {
+        const cInfo = coursesMap[o.courseId.toUpperCase()];
+        body.innerHTML += `<tr>
+                    <td title="${o.courseId}"><strong>${cInfo?.code || 'N/A'}</strong><br><small class="text-muted">${cInfo?.name || 'N/A'}</small></td>
+                    <td>${o.maxSlots}</td>
+                    <td><button class="btn btn-xs btn-danger" onclick="deleteOffering('${o.id}', '${periodId}')"><i class="fas fa-trash"></i> Xóa</button></td>
+                </tr>`;
+      });
+    }
+  }
 
-            if(sectionId === 'periodsSection' || sectionId === 'offeringsSection') {
-                document.querySelectorAll('.tab')[0].classList.add('active');
-            } else if(sectionId === 'equivalentsSection') {
-                document.querySelectorAll('.tab')[1].classList.add('active');
-            } else {
-                document.querySelectorAll('.tab')[2].classList.add('active');
-            }
+  function openOfferingModal() { $('#offeringModal').modal('show'); }
+  async function saveOfferings() {
+    const pId = document.getElementById('currentPeriodId').value;
+    const payload = { registrationPeriodId: pId, courseIds: document.getElementById('o_courseIds').value, maxSlots: document.getElementById('o_maxSlots').value };
+    const res = await fetch(`${API_ADMIN}/offerings/bulk`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(res.ok) { showAlert('Thêm môn thành công'); $('#offeringModal').modal('hide'); loadPeriodOfferings(pId); }
+  }
+  async function deleteOffering(id, pId) { if(confirm('Xóa môn này?')) { await fetch(`${API_ADMIN}/offerings/${id}`, { method: 'DELETE' }); loadPeriodOfferings(pId); } }
 
-            document.getElementById(sectionId).classList.add('active');
+  async function loadEquivs() {
+    const res = await fetch(`${API_ADMIN}/equivalent-courses`);
+    const data = await res.json();
+    const body = document.getElementById('equivBody');
+    body.innerHTML = '';
+    if(data.success && data.data) {
+      const courseIds = data.data.flatMap(e => [e.originalCourseId, e.equivalentCourseId]);
+      await fetchCourses(courseIds); // Fetch course details
+      data.data.forEach(e => {
+        const origInfo = coursesMap[e.originalCourseId.toUpperCase()];
+        const equivInfo = coursesMap[e.equivalentCourseId.toUpperCase()];
+        body.innerHTML += `<tr>
+                    <td title="${e.originalCourseId}"><strong>${origInfo?.code || 'N/A'}</strong><br><small class="text-muted">${origInfo?.name || 'N/A'}</small></td>
+                    <td title="${e.equivalentCourseId}"><strong>${equivInfo?.code || 'N/A'}</strong><br><small class="text-muted">${equivInfo?.name || 'N/A'}</small></td>
+                    <td><span class="badge badge-info">${e.equivalenceType === 1 ? 'Thay thế' : 'Tương đương'}</span></td>
+                    <td>${e.note || ''}</td>
+                    <td><button class="btn btn-xs btn-danger" onclick="deleteEquiv('${e.id}')"><i class="fas fa-trash"></i> Xóa</button></td>
+                </tr>`;
+      });
+    }
+  }
+  function openEquivModal() {
+    document.getElementById('e_orig').value = '';
+    document.getElementById('e_equiv').value = '';
+    document.getElementById('e_effectDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('e_active').checked = true;
+    document.getElementById('e_note').value = '';
+    $('#equivModal').modal('show');
+  }
+  async function saveEquiv() {
+    const payload = { originalCourseId: document.getElementById('e_orig').value, equivalentCourseId: document.getElementById('e_equiv').value, equivalenceType: 1, effectDate: document.getElementById('e_effectDate').value, note: document.getElementById('e_note').value, isActive: document.getElementById('e_active').checked };
+    const res = await fetch(`${API_ADMIN}/equivalent-courses`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if(res.ok && data.success) { showAlert('Đã lưu'); $('#equivModal').modal('hide'); loadEquivs(); }
+    else { showAlert((data && data.message) || 'Lưu cặp môn thất bại', 'danger'); }
+  }
+  async function deleteEquiv(id) { if(confirm('Xóa?')) { await fetch(`${API_ADMIN}/equivalent-courses/${id}`, { method: 'DELETE' }); loadEquivs(); } }
 
-            if(sectionId === 'periodsSection') loadPeriods();
-            if(sectionId === 'equivalentsSection') loadEquivalents();
-            if(sectionId === 'registrationsSection') loadRegistrations();
-            if(sectionId === 'requestsSection') loadRequests();
-        }
+  async function loadAllRegs() {
+    const res = await fetch(`${API_ADMIN}/course-registrations`);
+    const data = await res.json();
+    const body = document.getElementById('allRegsBody');
+    body.innerHTML = '';
+    if(data.success && data.data) {
+      const studentIds = data.data.map(r => r.studentId);
+      const courseIds = data.data.map(r => r.courseId);
+      await fetchStudentProfiles(studentIds);
+      await fetchCourses(courseIds);
 
-        // --- PERIODS ---
-        async function loadPeriods() {
-            try {
-                const res = await fetch(`${API_ADMIN}/periods`);
-                const data = await res.json();
-                const tbody = document.querySelector('#periodsTable tbody');
-                tbody.innerHTML = '';
-                if(data.data) {
-                    data.data.forEach(p => {
-                        tbody.innerHTML += `<tr>
-                            <td>${p.name}</td>
-                            <td>${p.startTime.substring(0,10)}</td>
-                            <td>${p.endTime.substring(0,10)}</td>
-                            <td>${p.isActive ? 'Yes' : 'No'}</td>
-                            <td>
-                                <button onclick="manageOfferings('${p.id}', '${p.name}')">Manage Offerings</button>
-                                <button class="danger" onclick="deletePeriod('${p.id}')" style="margin-left:5px;">Delete</button>
-                            </td>
-                        </tr>`;
-                    });
-                }
-            } catch(e) { showMessage('Error loading periods', true); }
-        }
+      data.data.forEach(r => {
+        const sInfo = studentProfilesMap[r.studentId.toUpperCase()];
+        const cInfo = coursesMap[r.courseId.toUpperCase()];
+        let st = r.status === 1 ? '<span class="badge badge-success">Thành công</span>' : (r.status === 3 ? '<span class="badge badge-secondary">Đã hủy</span>' : '<span class="badge badge-warning">Chờ</span>');
+        let typeText = r.registrationType === 2 ? 'Học lại' : (r.registrationType === 3 ? 'Cải thiện' : 'Học mới');
+        body.innerHTML += `<tr>
+                    <td title="${r.studentId}"><strong>${sInfo?.studentCode || 'N/A'}</strong></td>
+                    <td>${sInfo?.studentName || 'N/A'}</td>
+                    <td title="${r.courseId}"><strong>${cInfo?.code || 'N/A'}</strong></td>
+                    <td>${cInfo?.name || 'N/A'}</td>
+                    <td>${typeText}</td>
+                    <td>${r.isPaid ? '<span class="text-success"><i class="fas fa-check"></i></span>' : '<span class="text-danger"><i class="fas fa-times"></i></span>'}</td>
+                    <td>${st}</td>
+                    <td>${new Date(r.registeredAt).toLocaleDateString()}</td>
+                </tr>`;
+      });
+    }
+  }
+  function openForceRegModal() { $('#forceRegModal').modal('show'); }
+  async function forceRegister() {
+    const payload = { studentId: document.getElementById('f_studentId').value, courseId: document.getElementById('f_courseId').value, registrationPeriodId: document.getElementById('f_periodId').value, registrationType: document.getElementById('f_type').value, force: true };
+    const res = await fetch(`${API_ADMIN}/course-registrations`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if(res.ok) { showAlert('Ép đăng ký thành công!'); $('#forceRegModal').modal('hide'); loadAllRegs(); }
+  }
 
-        async function createPeriod() {
-            const payload = {
-                name: document.getElementById('p_name').value,
-                semesterId: document.getElementById('p_semId').value,
-                startTime: document.getElementById('p_start').value,
-                endTime: document.getElementById('p_end').value,
-                maxCredits: parseInt(document.getElementById('p_max').value),
-                minCredits: parseInt(document.getElementById('p_min').value),
-                allowRetake: true, isOpen: true, isActive: true
-            };
-            try {
-                const res = await fetch(`${API_ADMIN}/periods`, {
-                    method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-                });
-                if(res.ok) { showMessage('Period created'); loadPeriods(); }
-                else showMessage('Failed to create period', true);
-            } catch(e) { showMessage('Request failed', true); }
-        }
+  async function loadStats() {
+    const res = await fetch(API_REQ);
+    const data = await res.json();
+    const body = document.getElementById('reqBody');
+    body.innerHTML = '';
+    if(!data.success || !data.data || !data.data.length) {
+      body.innerHTML = '<tr><td colspan="8" class="text-center py-4">Không có yêu cầu nào.</td></tr>';
+      return;
+    }
+    const studentIds = data.data.map(r => r.studentId).filter(Boolean);
+    const courseIds = data.data.map(r => r.desiredCourseId).filter(Boolean);
+    await fetchStudentProfiles(studentIds);
+    await fetchCourses(courseIds);
 
-        async function deletePeriod(id) {
-            if(!confirm('Delete this period?')) return;
-            try {
-                const res = await fetch(`${API_ADMIN}/periods/${id}`, { method: 'DELETE' });
-                if(res.ok) { showMessage('Deleted'); loadPeriods(); }
-            } catch(e) {}
-        }
+    data.data.forEach(r => {
+      const sInfo = studentProfilesMap[r.studentId.toUpperCase()];
+      const cInfo = coursesMap[r.desiredCourseId?.toUpperCase()];
+      let st = r.status === 'PENDING' ? '<span class="badge badge-warning">Chờ</span>' : (r.status === 'APPROVED' ? '<span class="badge badge-success">Đã duyệt</span>' : '<span class="badge badge-danger">Từ chối</span>');
+      const desiredCourseName = cInfo?.name || r.desiredCourseName || 'N/A';
+      const desiredCourseCode = cInfo?.code || (r.desiredCourseId ? 'N/A' : '');
+      body.innerHTML += `<tr>
+                <td title="${r.studentId}"><strong>${sInfo?.studentCode || 'N/A'}</strong></td>
+                <td>${sInfo?.studentName || 'N/A'}</td>
+                <td title="${r.desiredCourseId || ''}"><strong>${desiredCourseCode || '—'}</strong></td>
+                <td>${desiredCourseName}</td>
+                <td>${r.requestType === 'OPEN_CLASS' ? 'Mở lớp' : 'Hỗ trợ khác'}</td>
+                <td>${r.reason || ''}</td>
+                <td>${st}</td>
+                <td>
+                    <button class="btn btn-sm btn-success" ${r.status !== 'PENDING' ? 'disabled' : ''} onclick="approveRequest('${r.id}')"><i class="fas fa-check"></i> Duyệt</button>
+                    <button class="btn btn-sm btn-danger" ${r.status !== 'PENDING' ? 'disabled' : ''} onclick="rejectRequest('${r.id}')"><i class="fas fa-times"></i> Hủy</button>
+                </td>
+            </tr>`;
+    });
+  }
 
-        // --- OFFERINGS (Course Classes in a Period) ---
-        async function manageOfferings(periodId, periodName) {
-            document.getElementById('o_period_id').value = periodId;
-            document.getElementById('offeringsTitle').innerText = `Manage Offerings for: ${periodName}`;
-            switchTab('offeringsSection');
+  async function approveRequest(id) {
+    if(!confirm('Duyệt yêu cầu này?')) return;
+    const res = await fetch(`${API_REQ}/${id}/approve`, { method:'PATCH' });
+    if(res.ok) { showAlert('Đã duyệt!', 'success'); loadStats(); }
+  }
 
-            try {
-                const res = await fetch(`${API_ADMIN}/offerings?period_id=${periodId}`);
-                const data = await res.json();
-                const tbody = document.querySelector('#offeringsTable tbody');
-                tbody.innerHTML = '';
+  async function rejectRequest(id) {
+    if(!confirm('Từ chối yêu cầu này?')) return;
+    const res = await fetch(`${API_REQ}/${id}/reject`, { method:'PATCH' });
+    if(res.ok) { showAlert('Đã từ chối!', 'danger'); loadStats(); }
+  }
 
-                if(data.data && data.data.length > 0) {
-                    const offerings = data.data;
-                    const courseIds = offerings.map(o => o.courseId);
-
-                    // Fetch full course info using the new API
-                    const coursesRes = await fetch(`/api/courses?ids=${courseIds.join(',')}`);
-                    const coursesData = await coursesRes.json();
-
-                    const coursesMap = {};
-                    if(coursesData.success && coursesData.data) {
-                        coursesData.data.forEach(c => {
-                            coursesMap[c.id] = c;
-                        });
-                    }
-
-                    offerings.forEach(o => {
-                        const cInfo = coursesMap[o.courseId];
-                        const cName = cInfo ? cInfo.name : '<i>N/A (Course not found)</i>';
-                        const cCredits = cInfo ? cInfo.credits : '-';
-
-                        tbody.innerHTML += `<tr>
-                            <td>${cName}</td>
-                            <td title="${o.courseId}">${o.courseId.substring(0,8)}...</td>
-                            <td>${cCredits}</td>
-                            <td>${o.availableSlots} / ${o.maxSlots}</td>
-                            <td>
-                                <button class="danger" onclick="removeOffering('${o.id}')">Remove</button>
-                            </td>
-                        </tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="5">No offerings added to this period yet.</td></tr>';
-                }
-            } catch(e) { showMessage('Error loading offerings', true); }
-        }
-
-        async function addOfferingsBulk() {
-            const periodId = document.getElementById('o_period_id').value;
-            const courseIdsText = document.getElementById('o_course_ids').value;
-            const maxSlots = parseInt(document.getElementById('o_max_slots').value);
-
-            if(!courseIdsText.trim()) {
-                showMessage("Please enter at least one Course ID.", true);
-                return;
-            }
-
-            const payload = {
-                registrationPeriodId: periodId,
-                courseIds: courseIdsText,
-                maxSlots: maxSlots
-            };
-
-            try {
-                const res = await fetch(`${API_ADMIN}/offerings/bulk`, {
-                    method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if(res.ok && data.success) {
-                    showMessage(data.message || 'Offerings added to period');
-                    document.getElementById('o_course_ids').value = '';
-                    const title = document.getElementById('offeringsTitle').innerText.replace('Manage Offerings for: ', '');
-                    manageOfferings(periodId, title);
-                } else {
-                    showMessage(data.message || 'Failed to add offerings', true);
-                }
-            } catch(e) { showMessage('Request failed', true); }
-        }
-
-        async function removeOffering(offeringId) {
-            if(!confirm('Remove this course offering?')) return;
-            const periodId = document.getElementById('o_period_id').value;
-            try {
-                const res = await fetch(`${API_ADMIN}/offerings/${offeringId}`, { method: 'DELETE' });
-                if(res.ok) {
-                    showMessage('Offering removed');
-                    const title = document.getElementById('offeringsTitle').innerText.replace('Manage Offerings for: ', '');
-                    manageOfferings(periodId, title);
-                }
-            } catch(e) {}
-        }
-
-
-        // --- EQUIVALENTS ---
-        async function loadEquivalents() {
-            try {
-                const res = await fetch(`${API_ADMIN}/equivalent-courses`);
-                const data = await res.json();
-                const tbody = document.querySelector('#equivsTable tbody');
-                tbody.innerHTML = '';
-                if(data.data) {
-                    data.data.forEach(e => {
-                        tbody.innerHTML += `<tr>
-                            <td title="${e.id}">${e.id.substring(0,8)}</td>
-                            <td title="${e.originalCourseId}">${e.originalCourseId.substring(0,8)}</td>
-                            <td title="${e.equivalentCourseId}">${e.equivalentCourseId.substring(0,8)}</td>
-                            <td>${e.equivalenceType}</td>
-                            <td><button class="danger" onclick="deleteEquiv('${e.id}')">Delete</button></td>
-                        </tr>`;
-                    });
-                }
-            } catch(e) {}
-        }
-
-        async function createEquivalent() {
-             const payload = {
-                originalCourseId: document.getElementById('e_orig').value,
-                equivalentCourseId: document.getElementById('e_equiv').value,
-                equivalenceType: parseInt(document.getElementById('e_type').value),
-                effectDate: document.getElementById('e_date').value,
-                isActive: true
-            };
-            try {
-                const res = await fetch(`${API_ADMIN}/equivalent-courses`, {
-                    method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-                });
-                if(res.ok) { showMessage('Created'); loadEquivalents(); }
-                else showMessage('Failed', true);
-            } catch(e) { showMessage('Request failed', true); }
-        }
-
-        async function deleteEquiv(id) {
-             if(!confirm('Delete?')) return;
-            try {
-                const res = await fetch(`${API_ADMIN}/equivalent-courses/${id}`, { method: 'DELETE' });
-                if(res.ok) { showMessage('Deleted'); loadEquivalents(); }
-            } catch(e) {}
-        }
-
-        // --- REGISTRATIONS ---
-        async function loadRegistrations() {
-            try {
-                const res = await fetch(`${API_ADMIN}/course-registrations`);
-                const data = await res.json();
-                const tbody = document.querySelector('#regsTable tbody');
-                tbody.innerHTML = '';
-                if(data.data) {
-                    data.data.forEach(r => {
-                        tbody.innerHTML += `<tr>
-                            <td title="${r.id}">${r.id.substring(0,8)}</td>
-                            <td title="${r.studentId}">${r.studentId.substring(0,8)}</td>
-                            <td title="${r.courseId}">${r.courseId.substring(0,8)}</td>
-                            <td>${r.status === 1 ? 'Success' : (r.status===3?'Canceled':'Pending')}</td>
-                            <td>${r.isPaid ? 'Yes':'No'}</td>
-                        </tr>`;
-                    });
-                }
-            } catch(e) {}
-        }
-
-        // --- STUDENT REQUESTS ---
-        async function loadRequests() {
-            try {
-                const res = await fetch('/api/admin/registration/requests');
-                const data = await res.json();
-                const tbody = document.querySelector('#requestsTable tbody');
-                tbody.innerHTML = '';
-                if(data.data && data.data.length > 0) {
-                    data.data.forEach(r => {
-                        tbody.innerHTML += `<tr>
-                            <td>${new Date(r.createdAt).toLocaleString()}</td>
-                            <td>${r.studentCode || ''}<br>${r.studentName || ''}<br><small>${r.faculty || ''} - ${r.cohort || ''}</small></td>
-                            <td>${r.requestType}</td>
-                            <td>${(r.targetFaculty || '') + ' ' + (r.targetCohort || '') + ' ' + (r.targetSemester || '')}<br>${r.desiredCourseName || ''}</td>
-                            <td>${r.status}</td>
-                            <td>
-                                <button onclick="approveRequest('${r.id}')">Approve</button>
-                                <button class="danger" onclick="rejectRequest('${r.id}')" style="margin-left:5px;">Reject</button>
-                            </td>
-                        </tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="6">No requests found.</td></tr>';
-                }
-            } catch(e) { showMessage('Error loading requests', true); }
-        }
-
-        async function approveRequest(id) {
-            try {
-                const res = await fetch(`/api/admin/registration/requests/${id}/approve`, { method: 'PATCH' });
-                if(res.ok) { showMessage('Request approved'); loadRequests(); }
-            } catch(e) { showMessage('Approve failed', true); }
-        }
-
-        async function rejectRequest(id) {
-            try {
-                const res = await fetch(`/api/admin/registration/requests/${id}/reject`, { method: 'PATCH' });
-                if(res.ok) { showMessage('Request rejected'); loadRequests(); }
-            } catch(e) { showMessage('Reject failed', true); }
-        }
-
-        async function forceRegister() {
-            const payload = {
-                studentId: document.getElementById('r_student').value,
-                courseId: document.getElementById('r_course').value,
-                registrationPeriodId: document.getElementById('r_period').value,
-                registrationType: parseInt(document.getElementById('r_type').value)
-            };
-            try {
-                const res = await fetch(`${API_ADMIN}/course-registrations`, {
-                    method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if(res.ok && data.success) { showMessage('Force registered'); loadRegistrations(); }
-                else showMessage(data.message || 'Failed', true);
-            } catch(e) { showMessage('Request failed', true); }
-        }
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-
-        // Init
-        switchTab('periodsSection');
-    </script>
+  loadDashboardStats();
+</script>
 </body>
 </html>

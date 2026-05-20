@@ -183,6 +183,25 @@ public class RegistrationServiceImpl implements RegistrationService {
         return courseRegistrationMapper.toResponse(updatedRegistration);
     }
 
+    @Override
+    @Transactional
+    public CourseRegistrationResponse reactivateRegistration(UUID registrationId, UUID studentId) {
+        CourseRegistration registration = courseRegistrationRepository.findById(registrationId)
+                .orElseThrow(() -> new NotFoundException("Registration not found"));
+
+        if (!registration.getStudentId().equals(studentId)) {
+            throw new BadRequestException("You are not authorized to reactivate this registration");
+        }
+
+        if (registration.getStatus() != 3) {
+            throw new BadRequestException("Only cancelled registrations can be reactivated");
+        }
+
+        registration.setStatus(1); // 1=active
+        CourseRegistration updatedRegistration = courseRegistrationRepository.save(registration);
+        return courseRegistrationMapper.toResponse(updatedRegistration);
+    }
+
     private RegistrationPeriod validateRegistrationPeriod(UUID periodId, boolean force) {
         RegistrationPeriod period = registrationPeriodRepository.findById(periodId)
                 .orElseThrow(() -> new NotFoundException("Registration period not found"));

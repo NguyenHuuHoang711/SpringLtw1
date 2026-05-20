@@ -9,11 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/student-profiles")
@@ -35,6 +38,18 @@ public class StudentProfileController {
         return studentProfileRepository.findByStudentId(studentId)
                 .<ResponseEntity<ApiResponse<StudentProfile>>>map(profile -> ResponseEntity.ok(new ApiResponse<>(true, profile, "Student profile retrieved")))
                 .orElseGet(() -> ResponseEntity.status(404).body(new ApiResponse<>(false, new StudentProfile(), "Student profile not found")));
+    }
+
+    @GetMapping("/batch")
+    @Operation(summary = "Get student profiles by a list of student IDs")
+    public ResponseEntity<ApiResponse<List<StudentProfile>>> getBatch(@RequestParam("ids") String ids) {
+        List<UUID> studentIds = Arrays.stream(ids.split("[\\s,]+"))
+                .filter(s -> !s.isBlank())
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+
+        List<StudentProfile> profiles = studentProfileRepository.findAllById(studentIds);
+        return ResponseEntity.ok(new ApiResponse<>(true, profiles, "Student profiles retrieved"));
     }
 }
 

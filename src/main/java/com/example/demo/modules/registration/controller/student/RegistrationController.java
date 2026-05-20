@@ -108,4 +108,14 @@ public class RegistrationController {
         ApiResponse<CourseRegistrationResponse> response = new ApiResponse<>(true, registration, "Registration cancelled successfully");
         return ResponseEntity.ok(response);
     }
+
+    @PatchMapping("/{id}/reactivate")
+    @Operation(summary = "Reactivate Course Registration", description = "Reactivates a cancelled course registration for the authenticated student.")
+    public ResponseEntity<ApiResponse<CourseRegistrationResponse>> reactivateRegistration(
+            @PathVariable UUID id,
+            @RequestParam("student_id") UUID studentId) {
+        CourseRegistrationResponse registration = registrationService.reactivateRegistration(id, studentId);
+        ApiResponse<CourseRegistrationResponse> response = new ApiResponse<>(true, registration, "Registration reactivated successfully");
+        return ResponseEntity.ok(response);
+    }
 }

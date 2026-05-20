@@ -1,503 +1,557 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 8px; max-width: 1200px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        .section { margin-bottom: 30px; display: none;}
-        .section.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f9f9f9; }
-        button { padding: 5px 10px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
-        button.cancel-btn { background-color: #dc3545; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; display: none; }
-        .message.success { background-color: #d4edda; color: #155724; display: block; }
-        .message.error { background-color: #f8d7da; color: #721c24; display: block; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { padding: 10px 15px; background: #e9ecef; border: 1px solid #ddd; cursor: pointer; border-radius: 4px; }
-        .tab.active { background: #007bff; color: white; border-color: #007bff; }
-
-        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; display: inline-block; margin-top: 5px;}
-        .badge-failed { background-color: #dc3545; }
-        .badge-improvable { background-color: #ffc107; color: #333; }
-        .badge-passed { background-color: #28a745; }
-        .badge-new { background-color: #17a2b8; }
-
-        .badge-status-success { background-color: #28a745; }
-        .badge-status-pending { background-color: #ffc107; color: #333; }
-        .badge-status-cancelled { background-color: #6c757d; }
-
-        .type-text { font-weight: bold; color: #495057; }
-        .small-note { font-size: 0.85rem; color: #6c757d; display: block; margin-top: 4px;}
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Dashboard - Đào tạo</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <style>
+    .section-content { display: none; }
+    .section-content.active { display: block; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>Student Dashboard</h2>
-            <div>
-                <span id="userDisplay"></span>
-                <a href="/student/focus-courses" style="margin-left:10px;"><button type="button" style="background:#17a2b8;">Focus Courses</button></a>
-                <button onclick="logout()" style="margin-left: 10px; background-color: #6c757d;">Logout</button>
-            </div>
-        </div>
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
 
-        <div id="statusMessage" class="message"></div>
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav"><li class="nav-item"><a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a></li></ul>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item"><a class="nav-link text-danger cursor-pointer" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+    </ul>
+  </nav>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('periodsSection')">Registration Periods</div>
-            <div class="tab" onclick="switchTab('myRegistrationsSection')">My Registrations</div>
-            <div class="tab" onclick="window.location.href='/student/all-courses'" style="margin-left: 10px; cursor: pointer; border: 1px solid #ffc107; background: #fff3cd;">📚 All Courses</div>
-        </div>
-
-        <!-- 1. ACTIVE PERIODS SECTION -->
-        <div class="section active" id="periodsSection">
-            <h3>Active Registration Periods</h3>
-            <table id="periodsTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Max Credits</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 2. COURSE OFFERINGS SECTION (Only visible when a period is selected) -->
-        <div class="section" id="offeringsSection">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="offeringsTitle">Available Courses (Offerings)</h3>
-                <button onclick="switchTab('periodsSection')" style="background: #6c757d;">Back to Periods</button>
-            </div>
-            <input type="hidden" id="selectedPeriodId">
-            <table id="offeringsTable">
-                <thead>
-                    <tr>
-                        <th>Course Name</th>
-                        <th>Course ID</th>
-                        <th>Available Slots</th>
-                        <th>My Grade Info</th>
-                        <th>Registration Type</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 3. MY REGISTRATIONS SECTION -->
-        <div class="section" id="myRegistrationsSection">
-            <h3>My Registrations</h3>
-            <table id="registrationsTable">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Period</th>
-                        <th>Course Name</th>
-                        <th>Credits</th>
-                        <th>Type</th>
-                        <th>Paid</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="#" class="brand-link"><span class="brand-text font-weight-light ml-3">Hệ thống Đào tạo</span></a>
+    <div class="sidebar">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image"><i class="fas fa-user-graduate fa-2x text-white"></i></div>
+        <div class="info"><a href="#" class="d-block" id="sidebarUserName">Sinh viên</a></div>
+      </div>
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+          <li class="nav-item"><a href="#" class="nav-link tab-link active" data-target="dashboardSection"><i class="nav-icon fas fa-home"></i><p>Tổng quan / Đợt ĐK</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="focusSection"><i class="nav-icon fas fa-exclamation-circle"></i><p>Môn Rớt / Cải thiện</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="paymentSection"><i class="nav-icon fas fa-wallet"></i><p>Thanh toán</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="supportSection"><i class="nav-icon fas fa-headset"></i><p>Yêu cầu tự do (Support)</p></a></li>
+          <li class="nav-item"><a href="#" class="nav-link tab-link" data-target="historySection"><i class="nav-icon fas fa-history"></i><p>Lịch sử Yêu cầu</p></a></li>
+        </ul>
+      </nav>
     </div>
+  </aside>
 
-    <script>
-        const API_BASE = '/api/registration';
-        const userId = localStorage.getItem('fake_user_id');
-        let myGradesMap = {}; // Maps courseId to grade value
-        let periodsMap = {};  // Maps periodId to period object
-        let myRegistrationsMap = {}; // Maps courseId to registration object for the current period
+  <div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2"><div class="col-sm-6"><h1 class="m-0" id="pageTitle">Tổng quan Sinh viên</h1></div></div>
+        <div id="alertBox" class="alert d-none mt-2"></div>
+      </div>
+    </section>
 
-        let replacedCourseIds = new Set(); // Set of originalCourseIds that shouldn't be displayed
-        let replacingToReplacedMap = {}; // Maps equivalentCourseId to originalCourseId
+    <section class="content">
+      <div class="container-fluid">
 
-        if (!userId || localStorage.getItem('fake_user_role') !== 'student') {
-            window.location.href = '/';
+        <!-- DASHBOARD & PERIODS -->
+        <div id="dashboardSection" class="section-content active">
+          <div class="row">
+            <div class="col-lg-4 col-6"><div class="small-box bg-info"><div class="inner"><h3 id="statRegs">0</h3><p>Môn đã đăng ký</p></div><div class="icon"><i class="fas fa-check-square"></i></div></div></div>
+            <div class="col-lg-4 col-6"><div class="small-box bg-warning"><div class="inner"><h3 id="statUnpaid">0</h3><p>Chưa thanh toán</p></div><div class="icon"><i class="fas fa-money-bill"></i></div></div></div>
+            <div class="col-lg-4 col-6"><div class="small-box bg-danger"><div class="inner"><h3 id="statFocus">0</h3><p>Môn Rớt/Cải thiện</p></div><div class="icon"><i class="fas fa-exclamation-triangle"></i></div></div></div>
+          </div>
+          <div class="row" id="periodsRow">
+            <div class="col-12">
+              <div class="card card-primary card-outline">
+                <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-alt"></i> Đợt đăng ký khả dụng</h3></div>
+                <div class="card-body p-0">
+                  <table class="table table-striped" id="periodsTable">
+                    <thead><tr><th>Tên đợt</th><th>Bắt đầu</th><th>Kết thúc</th><th>Max TC</th><th>Hành động</th></tr></thead>
+                    <tbody id="periodsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row d-none" id="offeringsRow">
+            <div class="col-12">
+              <div class="card card-success card-outline">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h3 class="card-title"><i class="fas fa-list"></i> <span id="offeringsTitle">Môn học đang mở</span></h3>
+                  <button class="btn btn-sm btn-secondary float-right" onclick="backToPeriods()"><i class="fas fa-arrow-left"></i> Quay lại</button>
+                </div>
+                <div class="card-body p-0">
+                   <input type="hidden" id="selectedPeriodId">
+                  <table class="table table-striped" id="offeringsTable">
+                    <thead><tr><th>Tên môn</th><th>Mã Lớp</th><th>Slots trống</th><th>Tình trạng của bạn</th><th>Loại ĐK</th><th>Hành động</th></tr></thead>
+                    <tbody id="offeringsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="card card-info card-outline">
+                <div class="card-header"><h3 class="card-title"><i class="fas fa-tasks"></i> Môn học đã đăng ký</h3></div>
+                <div class="card-body p-0">
+                  <table class="table table-striped">
+                    <thead><tr><th>Ngày ĐK</th><th>Tên Đợt</th><th>Tên Môn / Mã Lớp</th><th>Loại</th><th>Thanh toán</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                    <tbody id="myRegistrationsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOCUS COURSES -->
+        <div id="focusSection" class="section-content">
+          <div class="card card-warning card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Danh sách môn học Điểm Thấp / Rớt</h3></div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Mã Môn</th><th>Tên Môn</th><th>Điểm cao nhất</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody id="focusBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYMENT -->
+        <div id="paymentSection" class="section-content">
+          <div class="card card-success card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-money-check-alt"></i> Các khoản chưa thanh toán</h3></div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Tên Môn / Mã Lớp</th><th>Loại ĐK</th><th>Số tiền</th><th>Hành động</th></tr></thead>
+                <tbody id="paymentsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUPPORT REQUEST FORM -->
+        <div id="supportSection" class="section-content">
+          <div class="row">
+            <div class="col-md-8 mx-auto">
+              <div class="card card-primary card-outline">
+                <div class="card-header"><h3 class="card-title"><i class="fas fa-headset"></i> Gửi Yêu cầu Tự do / Xin mở lớp</h3></div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label>Loại Yêu Cầu</label>
+                    <select id="reqType" class="form-control">
+                      <option value="OPEN_CLASS">Xin mở lớp (Môn học)</option>
+                      <option value="OPEN_PERIOD">Xin mở thêm đợt đăng ký</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Mã môn học (Course ID - Nếu xin mở lớp)</label>
+                    <input type="text" id="reqCourseId" class="form-control" placeholder="Nhập UUID của môn học (Không bắt buộc)...">
+                  </div>
+                  <div class="form-group">
+                    <label>Lý do / Nội dung hỗ trợ</label>
+                    <textarea id="reqReason" class="form-control" rows="4" placeholder="Ví dụ: Xin mở lớp để kịp xét tốt nghiệp..."></textarea>
+                  </div>
+                  <button class="btn btn-primary btn-block" onclick="submitSupportRequest()"><i class="fas fa-paper-plane"></i> Gửi Yêu Cầu</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div id="historySection" class="section-content">
+          <div class="card card-secondary card-outline">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-history"></i> Lịch sử yêu cầu của bạn</h3></div>
+            <div class="card-body p-0">
+              <table class="table table-striped">
+                <thead><tr><th>Tên Môn</th><th>Loại Yêu cầu</th><th>Lý do</th><th>Trạng thái</th><th>Ngày gửi</th></tr></thead>
+                <tbody id="historyBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<script>
+  const API_REG = '/api/registration';
+  const API_REQ = '/api/registration/requests';
+  const userId = localStorage.getItem('fake_user_id');
+  if (!userId || localStorage.getItem('fake_user_role') !== 'student') window.location.href = '/';
+
+  let periodsMap = {}; let myGradesMap = {}; let myRegistrationsMap = {}; let replacingToReplacedMap = {}; let replacedCourseIds = new Set();
+  let coursesMap = {}; // Cache course details
+  let studentProfile = {}; // Cache student profile
+
+  function showAlert(msg, type='success') {
+    const b = document.getElementById('alertBox');
+    b.className = `alert alert-${type} mt-2`;
+    b.textContent = msg;
+    b.classList.remove('d-none');
+    setTimeout(() => b.classList.add('d-none'), 4000);
+    window.scrollTo(0,0);
+  }
+
+  $('.tab-link').click(function(e) {
+    e.preventDefault();
+    $('.tab-link').removeClass('active'); $(this).addClass('active');
+    const target = $(this).data('target');
+    $('.section-content').removeClass('active'); $('#' + target).addClass('active');
+    document.getElementById('pageTitle').innerText = $(this).text().trim();
+
+    if(target === 'dashboardSection') { backToPeriods(); loadDashboard(); }
+    if(target === 'focusSection') loadFocusCourses();
+    if(target === 'paymentSection') loadUnpaid();
+    if(target === 'historySection') loadHistory();
+  });
+
+  function logout() { localStorage.clear(); window.location.href = '/'; }
+  function backToPeriods() { document.getElementById('offeringsRow').classList.add('d-none'); document.getElementById('periodsRow').classList.remove('d-none'); }
+  function money(v) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v || 0); }
+
+  async function fetchInitialData() {
+    try {
+      // Fetch Student Profile
+      const profileRes = await fetch(`/api/student-profiles/${userId}`);
+      const profileData = await profileRes.json();
+      if(profileData.success && profileData.data) {
+        studentProfile = profileData.data;
+        document.getElementById('sidebarUserName').innerText = `${studentProfile.fullName} (${studentProfile.studentCode})`;
+      } else {
+        document.getElementById('sidebarUserName').innerText = `SV: ${userId.substring(0,8)}...`;
+      }
+
+      const gradesRes = await fetch(`${API_REG}/grades/me?student_id=${userId}`);
+      const gradesData = await gradesRes.json();
+      if(gradesData.success) { gradesData.data.forEach(g => { myGradesMap[g.courseId.toUpperCase()] = g.score || g.grade; }); }
+
+      const equivRes = await fetch(`${API_REG}/equivalent-courses`);
+      const equivData = await equivRes.json();
+      if(equivData.success) {
+        equivData.data.forEach(e => {
+          let origId = e.originalCourseId || e.courseId;
+          if(e.equivalenceType === 1 && e.isActive) {
+            replacedCourseIds.add(origId.toUpperCase());
+            replacingToReplacedMap[e.equivalentCourseId.toUpperCase()] = origId.toUpperCase();
+          }
+        });
+      }
+    } catch(e) { console.error("Error fetching initial data", e); }
+  }
+
+  async function fetchCourses(courseIds) {
+    if(!courseIds || courseIds.length === 0) return;
+    const validIds = courseIds.filter(id => id); // Filter out null/undefined first
+    if(validIds.length === 0) return;
+    const idsToFetch = validIds.filter(id => !coursesMap[id.toUpperCase()]);
+    if(idsToFetch.length > 0) {
+      const coursesRes = await fetch(`/api/courses?ids=${idsToFetch.join(',')}`);
+      const coursesData = await coursesRes.json();
+      if(coursesData.success && coursesData.data) {
+        coursesData.data.forEach(c => { coursesMap[c.id.toUpperCase()] = c; });
+      }
+    }
+  }
+
+  async function loadDashboard() {
+    const res = await fetch(`${API_REG}/periods/eligible?student_id=${userId}`);
+    const data = await res.json();
+    const tbody = document.querySelector('#periodsTable tbody');
+    tbody.innerHTML = '';
+
+    if (data.success && data.data.length > 0) {
+      data.data.forEach(p => {
+        periodsMap[p.id.toUpperCase()] = p;
+        tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${p.name}</strong></td>
+                        <td>${new Date(p.startTime).toLocaleDateString()}</td>
+                        <td>${new Date(p.endTime).toLocaleDateString()}</td>
+                        <td><span class="badge badge-info">${p.maxCredits} TC</span></td>
+                        <td><button class="btn btn-sm btn-primary" onclick="viewOfferings('${p.id}', '${p.name}')"><i class="fas fa-eye"></i> Xem môn</button></td>
+                    </tr>
+                `;
+      });
+    } else { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Không có đợt đăng ký nào.</td></tr>'; }
+
+    loadMyRegistrations();
+    fetch(`${API_REG}/payment/unpaid?student_id=${userId}`).then(r=>r.json()).then(d=> { if(d.success) document.getElementById('statUnpaid').innerText = d.data.length; });
+    fetch(`${API_REG}/focus-courses?student_id=${userId}`).then(r=>r.json()).then(d=> { if(d.success) document.getElementById('statFocus').innerText = d.data.length; });
+  }
+
+  async function viewOfferings(periodId, periodName) {
+    document.getElementById('selectedPeriodId').value = periodId;
+    document.getElementById('offeringsTitle').innerText = `Môn mở: ${periodName}`;
+    document.getElementById('periodsRow').classList.add('d-none');
+    document.getElementById('offeringsRow').classList.remove('d-none');
+
+    const myRegsRes = await fetch(`${API_REG}/me?student_id=${userId}`);
+    const myRegsData = await myRegsRes.json();
+    myRegistrationsMap = {};
+    if(myRegsData.success) { myRegsData.data.filter(r => r.registrationPeriodId.toUpperCase() === periodId.toUpperCase()).forEach(r => { myRegistrationsMap[r.courseId.toUpperCase()] = r; }); }
+
+    const res = await fetch(`${API_REG}/offerings?period_id=${periodId}`);
+    const data = await res.json();
+    const tbody = document.querySelector('#offeringsTable tbody');
+    tbody.innerHTML = '';
+
+    if (data.success && data.data.length > 0) {
+      const offerings = data.data;
+      const courseIdsToFetch = new Set(offerings.map(o => o.courseId));
+      offerings.forEach(o => {
+        const originalCourseId = replacingToReplacedMap[o.courseId.toUpperCase()];
+        if (originalCourseId) courseIdsToFetch.add(originalCourseId);
+      });
+      await fetchCourses(Array.from(courseIdsToFetch));
+
+      offerings.forEach(o => {
+        const courseIdUpper = o.courseId.toUpperCase();
+        if (replacedCourseIds.has(courseIdUpper)) return;
+
+        const cInfo = coursesMap[courseIdUpper];
+        const cName = cInfo ? `<strong>${cInfo.name}</strong> <br><small class="text-muted">${cInfo.credits} tín chỉ</small>` : '<i>N/A</i>';
+
+        let gradeVal = myGradesMap[courseIdUpper];
+        const originalCourseId = replacingToReplacedMap[courseIdUpper];
+        if (gradeVal == null && originalCourseId && myGradesMap[originalCourseId] != null) gradeVal = myGradesMap[originalCourseId];
+
+        let statusHtml = ''; let defaultType = 1; let typeText = '';
+        let maxSlots = o.maxSlots || 50; let availableSlots = o.availableSlots !== undefined ? o.availableSlots : 50;
+        let canRegister = availableSlots > 0;
+        let btnText = canRegister ? '<i class="fas fa-plus"></i> Đăng ký' : '<i class="fas fa-ban"></i> Hết chỗ';
+        let actionHtml = '';
+
+        let equivNote = originalCourseId ? `<br><small class="text-info">(Thay thế cho ${coursesMap[originalCourseId]?.name || 'N/A'})</small>` : '';
+
+        const existingReg = myRegistrationsMap[courseIdUpper];
+         if(existingReg && existingReg.status !== 3) { // If already registered and not cancelled
+           actionHtml = `<button class="btn btn-sm btn-outline-danger" onclick="cancelRegistration('${existingReg.id}')"><i class="fas fa-times"></i> Hủy ĐK</button>`;
+         } else if (existingReg && existingReg.status === 3) { // If cancelled, allow re-register
+           actionHtml = `<button class="btn btn-sm btn-success" data-register="reactivate" data-course-id="${o.courseId}" data-reg-id="${existingReg.id}" data-reg-type="${existingReg.registrationType}" onclick="handleReactivate(this)"><i class="fas fa-redo"></i> ĐK Lại</button>`;
+         } else { // New registration
+          if (gradeVal == null) { statusHtml = `<span class="badge badge-info">Học mới</span>${equivNote}`; typeText = 'Học mới'; }
+          else if (gradeVal < 4.0) { statusHtml = `Cũ: <strong>${gradeVal}</strong> <br><span class="badge badge-danger">Học lại</span>${equivNote}`; defaultType = 2; typeText = 'Học lại'; }
+          else if (gradeVal >= 4.0 && gradeVal < 6.5) { statusHtml = `Cũ: <strong>${gradeVal}</strong> <br><span class="badge badge-warning">Cải thiện</span>${equivNote}`; defaultType = 3; typeText = 'Cải thiện'; }
+          else { statusHtml = `Cũ: <strong>${gradeVal}</strong> <br><span class="badge badge-success">Đã Đạt</span>${equivNote}`; canRegister = false; typeText = 'N/A'; btnText = 'Không cho phép'; }
+
+          actionHtml = `<button class="btn btn-sm ${!canRegister ? 'btn-secondary' : 'btn-success'}" onclick="registerCourse('${o.courseId}', ${defaultType})" ${!canRegister ? 'disabled' : ''}>${btnText}</button>`;
         }
 
-        document.getElementById('userDisplay').innerText = 'Student: ' + userId.substring(0,8) + '...';
+        tbody.innerHTML += `<tr>
+                    <td><strong>${cInfo?.name || 'N/A'}</strong><br><small class="text-muted">${cInfo?.credits || 0} tín chỉ</small></td>
+                    <td>${cInfo?.code || 'N/A'}</td>
+                    <td><div class="progress progress-xs"><div class="progress-bar ${availableSlots === 0 ? 'bg-danger' : 'bg-success'}" style="width: ${((maxSlots - availableSlots)/maxSlots)*100}%"></div></div><small>${maxSlots - availableSlots} / ${maxSlots}</small></td>
+                    <td>${statusHtml}</td>
+                    <td><span class="text-secondary">${typeText}</span></td>
+                    <td>${actionHtml}</td>
+                </tr>`;
+      });
+    } else {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Chưa có môn nào được mở.</td></tr>';
+    }
+  }
 
-        function showMessage(msg, isError = false) {
-            const msgDiv = document.getElementById('statusMessage');
-            msgDiv.innerText = msg;
-            msgDiv.className = 'message ' + (isError ? 'error' : 'success');
-            setTimeout(() => { msgDiv.style.display = 'none'; }, 5000);
-        }
+   async function registerCourse(courseId, regType, existingRegId = null) {
+     const periodId = document.getElementById('selectedPeriodId').value;
 
-        function switchTab(sectionId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+     let url = API_REG;
+     let method = 'POST';
+     let payload = { studentId: userId, courseId: courseId, registrationPeriodId: periodId, registrationType: regType };
 
-            if(sectionId === 'periodsSection' || sectionId === 'offeringsSection') {
-                document.querySelectorAll('.tab')[0].classList.add('active');
-            } else {
-                document.querySelectorAll('.tab')[1].classList.add('active');
-            }
+     if(existingRegId) { // If re-registering a cancelled course
+       url = `${API_REG}/${existingRegId}/reactivate?student_id=${userId}`;
+       method = 'PATCH';
+       payload = {}; // Reactivate endpoint doesn't need body, but send empty JSON
+     }
 
-            document.getElementById(sectionId).classList.add('active');
+     try {
+       const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+       const data = await res.json();
 
-            if(sectionId === 'periodsSection') fetchPeriods();
-            if(sectionId === 'myRegistrationsSection') fetchMyRegistrations();
-        }
+       if(res.ok && data.success) {
+         showAlert('Đăng ký thành công!');
+         viewOfferings(periodId, document.getElementById('offeringsTitle').innerText);
+         loadDashboard();
+       } else {
+         showAlert(data.message || 'Lỗi đăng ký', 'danger');
+       }
+     } catch(e) {
+       console.error('Registration error:', e);
+       showAlert('Lỗi: ' + e.message, 'danger');
+     }
+   }
 
-        async function fetchInitialData() {
-             try {
-                // Fetch Grades
-                const gradesRes = await fetch(`${API_BASE}/grades/me?student_id=${userId}`);
-                const gradesData = await gradesRes.json();
-                if(gradesData.success && gradesData.data) {
-                    gradesData.data.forEach(g => {
-                        myGradesMap[g.courseId.toUpperCase()] = g.grade;
-                    });
-                }
+    async function handleReactivate(button) {
+      const courseId = button.getAttribute('data-course-id');
+      const regId = button.getAttribute('data-reg-id');
+      const regTypeStr = button.getAttribute('data-reg-type');
 
-                // Fetch Equivalents
-                const equivRes = await fetch(`${API_BASE}/equivalent-courses`);
-                const equivData = await equivRes.json();
-                if(equivData.success && equivData.data) {
-                    equivData.data.forEach(e => {
-                        if(e.equivalenceType === 1 && e.isActive) { // 1 = Replace
-                            const origId = e.originalCourseId.toUpperCase();
-                            const equivId = e.equivalentCourseId.toUpperCase();
-                            replacedCourseIds.add(origId);
-                            replacingToReplacedMap[equivId] = origId;
-                        }
-                    });
-                }
-             } catch(e) { console.error("Could not fetch initial data", e); }
-        }
+      if (!courseId || !regId || !regTypeStr) {
+        console.error('Missing data attributes:', { courseId, regId, regTypeStr });
+        showAlert('Lỗi: Dữ liệu không đầy đủ', 'danger');
+        return;
+      }
 
-        // --- 1. PERIODS ---
-        async function fetchPeriods() {
-            try {
-                const res = await fetch(`${API_BASE}/periods/eligible?student_id=${userId}`);
-                const data = await res.json();
-                const tbody = document.querySelector('#periodsTable tbody');
-                tbody.innerHTML = '';
+      const regType = parseInt(regTypeStr, 10);
+      if (isNaN(regType)) {
+        console.error('Invalid regType:', regTypeStr);
+        showAlert('Lỗi: Loại đăng ký không hợp lệ', 'danger');
+        return;
+      }
 
-                if (data.success && data.data.length > 0) {
-                    data.data.forEach(p => {
-                        periodsMap[p.id.toUpperCase()] = p; // Store for later use
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${p.name}</td>
-                                <td>${new Date(p.startTime).toLocaleDateString()}</td>
-                                <td>${new Date(p.endTime).toLocaleDateString()}</td>
-                                <td>${p.maxCredits}</td>
-                                <td><button onclick="viewOfferings('${p.id}', '${p.name}')">View Offerings</button></td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="5">No active periods found.</td></tr>';
-                }
-            } catch (err) {
-                showMessage('Error loading periods', true);
-            }
-        }
+      await registerCourse(courseId, regType, regId);
+    }
 
-        // --- 2. OFFERINGS (AVAILABLE COURSES) ---
-        async function viewOfferings(periodId, periodName) {
-            document.getElementById('selectedPeriodId').value = periodId;
-            document.getElementById('offeringsTitle').innerText = `Available Courses for: ${periodName}`;
-            switchTab('offeringsSection');
+   async function loadMyRegistrations() {
+    const res = await fetch(`${API_REG}/me?student_id=${userId}`);
+    const data = await res.json();
+    const tbody = document.getElementById('myRegistrationsBody');
+    tbody.innerHTML = '';
+    if(data.success) {
+      document.getElementById('statRegs').innerText = data.data.filter(r => r.status === 1).length;
+      await fetchCourses(data.data.map(r => r.courseId));
 
-            try {
-                // Fetch current registrations for this period to check status
-                const myRegsRes = await fetch(`${API_BASE}/me?student_id=${userId}`);
-                const myRegsData = await myRegsRes.json();
-                myRegistrationsMap = {};
-                if(myRegsData.success && myRegsData.data) {
-                    myRegsData.data
-                        .filter(r => r.registrationPeriodId.toUpperCase() === periodId.toUpperCase())
-                        .forEach(r => {
-                            myRegistrationsMap[r.courseId.toUpperCase()] = r;
-                        });
-                }
+      data.data.forEach(r => {
+        const cInfo = coursesMap[r.courseId.toUpperCase()];
+        let typeText = r.registrationType === 2 ? 'Học lại' : (r.registrationType === 3 ? 'Cải thiện' : 'Học mới');
+        let statusHtml = r.status === 1 ? '<span class="badge badge-success">Thành công</span>' : (r.status === 3 ? '<span class="badge badge-secondary">Đã hủy</span>' : '<span class="badge badge-warning">Chờ xử lý</span>');
+        tbody.innerHTML += `<tr>
+                    <td>${new Date(r.registeredAt).toLocaleDateString()}</td>
+                    <td>${periodsMap[r.registrationPeriodId.toUpperCase()]?.name || 'N/A'}</td>
+                    <td><strong>${cInfo?.name || 'N/A'}</strong><br><small class="text-muted">${cInfo?.code || ''}</small></td>
+                    <td><span class="text-secondary">${typeText}</span></td>
+                    <td>${r.isPaid ? '<span class="text-success"><i class="fas fa-check"></i> Có</span>' : '<span class="text-danger"><i class="fas fa-times"></i> Không</span>'}</td>
+                    <td>${statusHtml}</td>
+                    <td><button class="btn btn-sm btn-outline-danger" onclick="cancelRegistration('${r.id}')" ${r.isPaid || r.status === 3 ? 'disabled' : ''}><i class="fas fa-trash"></i> Hủy</button></td>
+                </tr>`;
+      });
+    }
+  }
 
-                const res = await fetch(`${API_BASE}/offerings?period_id=${periodId}`);
-                const data = await res.json();
-                const tbody = document.querySelector('#offeringsTable tbody');
-                tbody.innerHTML = '';
+  async function cancelRegistration(regId) {
+    if(!confirm('Hủy đăng ký môn này?')) return;
+    const res = await fetch(`${API_REG}/${regId}/cancel?student_id=${userId}`, { method: 'PATCH' });
+    if (res.ok) { showAlert('Đã hủy đăng ký'); loadDashboard(); const pId = document.getElementById('selectedPeriodId').value; if(pId && !document.getElementById('offeringsRow').classList.contains('d-none')) viewOfferings(pId, ''); }
+  }
 
-                if (data.success && data.data.length > 0) {
-                    const offerings = data.data;
+  async function loadFocusCourses() {
+    const res = await fetch(`${API_REG}/focus-courses?student_id=${userId}`);
+    const data = await res.json();
+    const body = document.getElementById('focusBody');
+    body.innerHTML = '';
+    if(data.success && data.data) {
+      await fetchCourses(data.data.map(c => c.courseId));
+      data.data.forEach(c => {
+        const cInfo = coursesMap[c.courseId.toUpperCase()];
+        body.innerHTML += `<tr>
+                    <td><strong>${cInfo?.code || 'N/A'}</strong></td>
+                    <td>${cInfo?.name || 'N/A'}</td>
+                    <td><span class="badge ${c.status === 'FAILED' ? 'badge-danger' : 'badge-warning'}">${c.bestGrade}</span></td>
+                    <td>${c.status === 'FAILED' ? '<span class="text-danger">Trượt</span>' : '<span class="text-warning">Cải thiện</span>'}</td>
+                    <td><button class="btn btn-sm btn-primary" onclick="prefillSupport('${c.courseId}')"><i class="fas fa-headset"></i> Xin mở lớp</button></td>
+                </tr>`;
+      });
+    }
+  }
 
-                    // We need to fetch details for offered courses PLUS any original replaced courses to display their names
-                    const courseIdsToFetch = new Set(offerings.map(o => o.courseId));
-                    offerings.forEach(o => {
-                        const originalCourseId = replacingToReplacedMap[o.courseId.toUpperCase()];
-                        if (originalCourseId) {
-                            courseIdsToFetch.add(originalCourseId);
-                        }
-                    });
-                    const courseIdsArray = Array.from(courseIdsToFetch);
+  function prefillSupport(courseId) {
+    $('.tab-link[data-target="supportSection"]').click();
+    document.getElementById('reqCourseId').value = courseId;
+    document.getElementById('reqReason').value = 'Kính gửi Phòng Đào tạo,\nEm cần mở lớp môn này để đảm bảo tiến độ.';
+  }
 
-                    // Fetch full course info
-                    let coursesMap = {};
-                    if(courseIdsArray.length > 0) {
-                        const coursesRes = await fetch(`/api/courses?ids=${courseIdsArray.join(',')}`);
-                        const coursesData = await coursesRes.json();
-                        if(coursesData.success && coursesData.data) {
-                            coursesData.data.forEach(c => {
-                                coursesMap[c.id.toUpperCase()] = c;
-                            });
-                        }
-                    }
+  async function loadUnpaid() {
+    const res = await fetch(`${API_REG}/payment/unpaid?student_id=${userId}`);
+    const data = await res.json();
+    const body = document.getElementById('paymentsBody');
+    body.innerHTML = '';
+    if (data.success && data.data) {
+      await fetchCourses(data.data.map(r => r.courseId));
+      data.data.forEach(r => {
+        const cInfo = coursesMap[r.courseId.toUpperCase()];
+        body.innerHTML += `<tr>
+                    <td><strong>${cInfo?.name || 'N/A'}</strong><br><small class="text-muted">${cInfo?.code || ''}</small></td>
+                    <td>${r.registrationType === 2 ? 'Học lại' : r.registrationType === 3 ? 'Cải thiện' : 'Học mới'}</td>
+                    <td><strong class="text-danger">${money(r.amount)}</strong></td>
+                    <td><button class="btn btn-success btn-sm" onclick="payNow('${r.id}')"><i class="fas fa-check-circle"></i> Thanh toán</button></td>
+                </tr>`;
+      });
+    }
+  }
 
-                    offerings.forEach(o => {
-                        const courseIdUpper = o.courseId.toUpperCase();
+  async function payNow(id) {
+    const res = await fetch(`${API_REG}/pay/${id}?student_id=${userId}`, { method: 'PATCH' });
+    if (res.ok) { showAlert('Thanh toán thành công!', 'success'); loadUnpaid(); loadDashboard(); }
+  }
 
-                        // 1. Hide replaced courses
-                        if (replacedCourseIds.has(courseIdUpper)) {
-                            return; // skip rendering
-                        }
+  async function submitSupportRequest() {
+    const courseId = document.getElementById('reqCourseId').value.trim();
+    const reason = document.getElementById('reqReason').value.trim();
+    const reqType = document.getElementById('reqType').value;
+    if(!reason) return showAlert('Vui lòng nhập lý do', 'danger');
 
-                        const cInfo = coursesMap[courseIdUpper];
-                        const cName = cInfo ? `${cInfo.name} (${cInfo.credits} tín chỉ)` : '<i>Course not found</i>';
+    const payload = { studentId: userId, requestType: reqType, desiredCourseId: courseId || null, reason: reason };
+    const res = await fetch(API_REQ, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if(res.ok) { showAlert('Gửi yêu cầu thành công!'); document.getElementById('reqCourseId').value = ''; document.getElementById('reqReason').value = ''; $('.tab-link[data-target="historySection"]').click(); }
+    else { showAlert('Gửi yêu cầu thất bại. Vui lòng kiểm tra lại thông tin.', 'danger'); }
+  }
 
-                        // 2. Business Logic for Grades & Equivalents
-                        let gradeVal = myGradesMap[courseIdUpper];
-                        const originalCourseId = replacingToReplacedMap[courseIdUpper];
-                        let isEquivalent = false;
+  async function loadHistory() {
+    const body = document.getElementById('historyBody');
+    body.innerHTML = '';
 
-                        // Identify if this is a replacing course
-                        if (originalCourseId) {
-                            isEquivalent = true;
-                        }
+    try {
+      const res = await fetch(`${API_REQ}/me?student_id=${userId}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
 
-                        // If student hasn't taken THIS course, check if they took the original
-                        if (gradeVal === undefined || gradeVal === null) {
-                            if (originalCourseId && myGradesMap[originalCourseId] !== undefined) {
-                                gradeVal = myGradesMap[originalCourseId];
-                            }
-                        }
+      const data = await res.json();
 
-                        let statusHtml = '';
-                        let defaultType = 1; // 1=New, 2=Retake, 3=Improve
-                        let typeText = '';
-                        let canRegister = o.availableSlots > 0;
-                        let btnText = o.availableSlots <= 0 ? 'Full' : 'Register';
-                        let actionHtml = '';
+      if(!data.success) {
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Lỗi khi tải dữ liệu: ' + (data.message || 'Unknown error') + '</td></tr>';
+        return;
+      }
 
-                        // 3. Create Replacement Text to show to the user clearly
-                        let equivNote = '';
-                        if (isEquivalent) {
-                            const origCourseInfo = coursesMap[originalCourseId];
-                            const origCourseName = origCourseInfo ? origCourseInfo.name : originalCourseId.substring(0,8);
-                            equivNote = `<span class="small-note" style="color: #0056b3;">(Môn thay thế cho: <b>${origCourseName}</b>)</span>`;
-                        }
+      if(!data.data || !data.data.length) {
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Bạn chưa gửi yêu cầu nào</td></tr>';
+        return;
+      }
 
-                        // 4. Check if already registered in this period
-                        const existingRegistration = myRegistrationsMap[courseIdUpper];
-                        if(existingRegistration && existingRegistration.status !== 3) { // Not cancelled
-                            actionHtml = `<button class="cancel-btn" onclick="cancelRegistration('${existingRegistration.id}', true)">Cancel</button>`;
-                        } else {
-                            if (gradeVal === undefined || gradeVal === null) {
-                                statusHtml = `${equivNote}<span class="badge badge-new">New (Chưa học)</span>`;
-                                defaultType = 1;
-                                typeText = 'Học mới';
-                            } else if (gradeVal < 4.0) {
-                                statusHtml = `${equivNote}Grade: ${gradeVal} <br><span class="badge badge-failed">Failed (Học lại)</span>`;
-                                defaultType = 2;
-                                typeText = 'Học lại';
-                            } else if (gradeVal >= 4.0 && gradeVal < 7.0) {
-                                statusHtml = `${equivNote}Grade: ${gradeVal} <br><span class="badge badge-improvable">Improvable (Cải thiện)</span>`;
-                                defaultType = 3;
-                                typeText = 'Cải thiện';
-                            } else if (gradeVal >= 7.0) {
-                                statusHtml = `${equivNote}Grade: ${gradeVal} <br><span class="badge badge-passed">Passed (Đạt)</span>`;
-                                canRegister = false;
-                                typeText = 'N/A';
-                                btnText = 'Not Allowed';
-                            }
-                            actionHtml = `<button onclick="registerCourse('${o.courseId}', ${defaultType})" ${!canRegister ? 'disabled' : ''}>${btnText}</button>`;
-                        }
+      // Filter out null/undefined course IDs before fetching
+      const validCourseIds = data.data.map(r => r.desiredCourseId).filter(id => id);
+      if(validCourseIds.length > 0) {
+        await fetchCourses(validCourseIds);
+      }
 
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${cName}</td>
-                                <td title="${o.courseId}">${o.courseId.substring(0,8)}...</td>
-                                <td>${o.availableSlots} / ${o.maxSlots}</td>
-                                <td>${statusHtml}</td>
-                                <td><span class="type-text">${typeText}</span></td>
-                                <td>${actionHtml}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="6">No courses offered in this period yet.</td></tr>';
-                }
-            } catch (err) {
-                showMessage('Error loading offerings', true);
-            }
-        }
+      data.data.forEach(r => {
+        let st = r.status === 'PENDING' ? '<span class="badge badge-warning">Chờ xử lý</span>' : (r.status === 'APPROVED' ? '<span class="badge badge-success">Đã duyệt</span>' : '<span class="badge badge-danger">Từ chối</span>');
+        const courseId = r.desiredCourseId ? r.desiredCourseId.toUpperCase() : null;
+        const cInfo = courseId ? coursesMap[courseId] : null;
+        body.innerHTML += `<tr>
+                    <td><strong>${cInfo?.name || 'N/A'}</strong><br><small class="text-muted">${cInfo?.code || ''}</small></td>
+                    <td>${r.requestType === 'OPEN_CLASS' ? 'Mở lớp' : 'Hỗ trợ khác'}</td>
+                    <td>${r.reason || ''}</td>
+                    <td>${st}</td>
+                    <td>${new Date(r.createdAt).toLocaleDateString('vi-VN')}</td>
+                </tr>`;
+      });
+    } catch (err) {
+      console.error('Failed to load history:', err);
+      body.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Không tải được lịch sử yêu cầu: ' + err.message + '</td></tr>';
+    }
+  }
 
-        // --- REGISTER ---
-        async function registerCourse(courseId, registrationType) {
-            const periodId = document.getElementById('selectedPeriodId').value;
-
-            try {
-                const res = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        studentId: userId,
-                        courseId: courseId,
-                        registrationPeriodId: periodId,
-                        registrationType: registrationType
-                    })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showMessage('Registered successfully!');
-                    const title = document.getElementById('offeringsTitle').innerText.replace('Available Courses for: ', '');
-                    viewOfferings(periodId, title);
-                } else {
-                    showMessage(data.message || 'Registration failed', true);
-                }
-            } catch (err) {
-                showMessage('Registration request failed', true);
-            }
-        }
-
-        // --- 3. MY REGISTRATIONS ---
-        async function fetchMyRegistrations() {
-            try {
-                // Ensure periods are loaded first to map the period name
-                if (Object.keys(periodsMap).length === 0) {
-                    await fetchPeriods();
-                }
-
-                // Pass the studentId dynamically from localStorage
-                const res = await fetch(`${API_BASE}/me?student_id=${userId}`);
-                const data = await res.json();
-                const tbody = document.querySelector('#registrationsTable tbody');
-                tbody.innerHTML = '';
-
-                if (data.success) {
-                    if(data.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8">No registrations found.</td></tr>';
-                        return;
-                    }
-                    const registrations = data.data;
-                    const courseIds = registrations.map(r => r.courseId);
-
-                    // Fetch full course info
-                    let coursesMap = {};
-                    if(courseIds.length > 0) {
-                        const coursesRes = await fetch(`/api/courses?ids=${courseIds.join(',')}`);
-                        const coursesData = await coursesRes.json();
-                        if(coursesData.success && coursesData.data) {
-                            coursesData.data.forEach(c => {
-                                coursesMap[c.id.toUpperCase()] = c;
-                            });
-                        }
-                    }
-
-                    registrations.forEach(r => {
-                        // Date formatting
-                        const regDate = new Date(r.registeredAt).toLocaleString();
-
-                        // Period mapping
-                        const period = periodsMap[r.registrationPeriodId.toUpperCase()];
-                        const periodName = period ? period.name : '<i>Unknown Period</i>';
-
-                        // Course mapping
-                        const courseIdUpper = r.courseId.toUpperCase();
-                        const cInfo = coursesMap[courseIdUpper];
-                        const cName = cInfo ? cInfo.name : '<i>N/A</i>';
-                        const cCredits = cInfo ? cInfo.credits : '-';
-
-                        // Type formatting
-                        let typeText = 'Học mới';
-                        if (r.registrationType === 2) typeText = 'Học lại';
-                        if (r.registrationType === 3) typeText = 'Cải thiện';
-
-                        // Status formatting
-                        let statusHtml = '';
-                        if (r.status === 1) statusHtml = '<span class="badge badge-status-success">Thành công</span>';
-                        else if (r.status === 2) statusHtml = '<span class="badge badge-status-pending">Chờ xử lý</span>';
-                        else if (r.status === 3) statusHtml = '<span class="badge badge-status-cancelled">Đã hủy</span>';
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${regDate}</td>
-                                <td>${periodName}</td>
-                                <td>${cName} <br><small style="color:gray;">${r.courseId.substring(0,8)}...</small></td>
-                                <td>${cCredits}</td>
-                                <td><span class="type-text">${typeText}</span></td>
-                                <td>${r.isPaid ? 'Yes' : 'No'}</td>
-                                <td>${statusHtml}</td>
-                                <td>
-                                    <button class="cancel-btn"
-                                        onclick="cancelRegistration('${r.id}', false)"
-                                        ${r.isPaid || r.status === 3 ? 'disabled' : ''}>
-                                        Cancel
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-            } catch (err) {
-                showMessage('Error loading registrations', true);
-            }
-        }
-
-        async function cancelRegistration(regId, fromOfferingsPage = false) {
-            if(!confirm('Are you sure you want to cancel this registration?')) return;
-            try {
-                // Pass the studentId dynamically from localStorage to the cancel endpoint
-                const res = await fetch(`${API_BASE}/${regId}/cancel?student_id=${userId}`, {
-                    method: 'PATCH'
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    showMessage('Registration cancelled');
-                    if(fromOfferingsPage) {
-                        const periodId = document.getElementById('selectedPeriodId').value;
-                        const title = document.getElementById('offeringsTitle').innerText.replace('Available Courses for: ', '');
-                        viewOfferings(periodId, title);
-                    } else {
-                        fetchMyRegistrations();
-                    }
-                } else {
-                    showMessage(data.message || 'Failed to cancel', true);
-                }
-            } catch (err) {
-                showMessage('Cancel request failed', true);
-            }
-        }
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/';
-        }
-
-        // Init
-        fetchInitialData().then(() => switchTab('periodsSection'));
-    </script>
+  fetchInitialData().then(() => { loadDashboard(); });
+</script>
 </body>
 </html>

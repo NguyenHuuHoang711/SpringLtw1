@@ -16,4 +16,5 @@ public interface RegistrationService {
     List<CourseRegistrationResponse> getMyRegistrations(UUID studentId);
     CourseRegistrationResponse registerCourse(CourseRegistrationRequest request);
     CourseRegistrationResponse cancelRegistration(UUID registrationId, UUID studentId);
+    CourseRegistrationResponse reactivateRegistration(UUID registrationId, UUID studentId);
 }
